@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.next/
+out/
+coverage/
+*.log
+.env
+.env.*
+!.env.example
+apps/api/src/generated/
+.DS_Store
+Thumbs.db
+
+# Ferramentas locais
+.claude/settings.local.json
+apps/web/next-env.d.ts
+*.tsbuildinfo

@@ -1,0 +1,338 @@
+// Verissimo ERP - modelo de dados
+// Toda tabela de negócio tem `empresaId`: é assim que cada cliente do SaaS
+// enxerga apenas os próprios dados.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────────────────────── Núcleo SaaS ─────────────────────────────
+
+enum Plano {
+  BASICO
+  PROFISSIONAL
+  EMPRESARIAL
+}
+
+enum Perfil {
+  ADMIN
+  GERENTE
+  VENDEDOR
+  FINANCEIRO
+  ESTOQUISTA
+}
+
+model Empresa {
+  id        String   @id @default(uuid())
+  nome      String
+  cnpj      String?  @unique
+  email     String?
+  telefone  String?
+  plano     Plano    @default(BASICO)
+  ativa     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  usuarios              Usuario[]
+  pessoas               Pessoa[]
+  categorias            Categoria[]
+  produtos              Produto[]
+  depositos             Deposito[]
+  estoques              Estoque[]
+  movimentos            MovimentoEstoque[]
+  pedidos               PedidoVenda[]
+  contasBancarias       ContaBancaria[]
+  categoriasFinanceiras CategoriaFinanceira[]
+  lancamentos           Lancamento[]
+}
+
+model Usuario {
+  id        String   @id @default(uuid())
+  empresaId String
+  nome      String
+  email     String   @unique
+  senhaHash String
+  perfil    Perfil   @default(VENDEDOR)
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  empresa Empresa       @relation(fields: [empresaId], references: [id])
+  pedidos PedidoVenda[]
+
+  @@index([empresaId])
+}
+
+// ───────────────────────────── Cadastros ─────────────────────────────
+
+enum TipoPessoa {
+  FISICA
+  JURIDICA
+}
+
+// Cliente e fornecedor ficam na mesma tabela: a mesma pessoa pode ser os dois.
+model Pessoa {
+  id          String     @id @default(uuid())
+  empresaId   String
+  tipo        TipoPessoa @default(FISICA)
+  nome        String
+  nomeFantasia String?
+  documento   String? // CPF ou CNPJ
+  email       String?
+  telefone    String?
+  cep         String?
+  endereco    String?
+  numero      String?
+  bairro      String?
+  cidade      String?
+  uf          String?
+  observacoes String?
+  cliente     Boolean    @default(true)
+  fornecedor  Boolean    @default(false)
+  ativo       Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  empresa     Empresa       @relation(fields: [empresaId], references: [id])
+  pedidos     PedidoVenda[]
+  lancamentos Lancamento[]
+
+  @@unique([empresaId, documento])
+  @@index([empresaId, nome])
+}
+
+model Categoria {
+  id        String   @id @default(uuid())
+  empresaId String
+  nome      String
+  createdAt DateTime @default(now())
+
+  empresa  Empresa   @relation(fields: [empresaId], references: [id])
+  produtos Produto[]
+
+  @@unique([empresaId, nome])
+}
+
+model Produto {
+  id            String   @id @default(uuid())
+  empresaId     String
+  categoriaId   String?
+  codigo        String
+  codigoBarras  String?
+  nome          String
+  descricao     String?
+  unidade       String   @default("UN")
+  precoCusto    Decimal  @default(0) @db.Decimal(14, 2)
+  precoVenda    Decimal  @default(0) @db.Decimal(14, 2)
+  estoqueMinimo Decimal  @default(0) @db.Decimal(14, 3)
+  servico       Boolean  @default(false) // serviço não movimenta estoque
+  ativo         Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  empresa    Empresa            @relation(fields: [empresaId], references: [id])
+  categoria  Categoria?         @relation(fields: [categoriaId], references: [id])
+  estoques   Estoque[]
+  movimentos MovimentoEstoque[]
+  itens      PedidoVendaItem[]
+
+  @@unique([empresaId, codigo])
+  @@index([empresaId, nome])
+}
+
+// ───────────────────────────── Estoque ─────────────────────────────
+
+model Deposito {
+  id        String   @id @default(uuid())
+  empresaId String
+  nome      String
+  padrao    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  empresa    Empresa            @relation(fields: [empresaId], references: [id])
+  estoques   Estoque[]
+  movimentos MovimentoEstoque[]
+  pedidos    PedidoVenda[]
+
+  @@unique([empresaId, nome])
+}
+
+// Saldo atual de um produto em um depósito.
+model Estoque {
+  id         String  @id @default(uuid())
+  empresaId  String
+  produtoId  String
+  depositoId String
+  quantidade Decimal @default(0) @db.Decimal(14, 3)
+
+  empresa  Empresa  @relation(fields: [empresaId], references: [id])
+  produto  Produto  @relation(fields: [produtoId], references: [id])
+  deposito Deposito @relation(fields: [depositoId], references: [id])
+
+  @@unique([produtoId, depositoId])
+  @@index([empresaId])
+}
+
+enum TipoMovimento {
+  ENTRADA
+  SAIDA
+  AJUSTE
+}
+
+// Histórico de tudo que entrou e saiu do estoque.
+model MovimentoEstoque {
+  id            String        @id @default(uuid())
+  empresaId     String
+  produtoId     String
+  depositoId    String
+  tipo          TipoMovimento
+  quantidade    Decimal       @db.Decimal(14, 3)
+  saldoAnterior Decimal       @db.Decimal(14, 3)
+  saldoNovo     Decimal       @db.Decimal(14, 3)
+  custoUnitario Decimal?      @db.Decimal(14, 2)
+  observacao    String?
+  pedidoId      String?
+  usuarioId     String?
+  createdAt     DateTime      @default(now())
+
+  empresa  Empresa      @relation(fields: [empresaId], references: [id])
+  produto  Produto      @relation(fields: [produtoId], references: [id])
+  deposito Deposito     @relation(fields: [depositoId], references: [id])
+  pedido   PedidoVenda? @relation(fields: [pedidoId], references: [id])
+
+  @@index([empresaId, createdAt])
+  @@index([produtoId])
+}
+
+// ───────────────────────────── Vendas ─────────────────────────────
+
+enum StatusPedido {
+  ORCAMENTO
+  APROVADO
+  FATURADO
+  CANCELADO
+}
+
+model PedidoVenda {
+  id           String       @id @default(uuid())
+  empresaId    String
+  numero       Int
+  clienteId    String
+  vendedorId   String?
+  depositoId   String
+  status       StatusPedido @default(ORCAMENTO)
+  subtotal     Decimal      @default(0) @db.Decimal(14, 2)
+  desconto     Decimal      @default(0) @db.Decimal(14, 2)
+  frete        Decimal      @default(0) @db.Decimal(14, 2)
+  total        Decimal      @default(0) @db.Decimal(14, 2)
+  parcelas     Int          @default(1)
+  observacoes  String?
+  faturadoEm   DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  empresa     Empresa            @relation(fields: [empresaId], references: [id])
+  cliente     Pessoa             @relation(fields: [clienteId], references: [id])
+  vendedor    Usuario?           @relation(fields: [vendedorId], references: [id])
+  deposito    Deposito           @relation(fields: [depositoId], references: [id])
+  itens       PedidoVendaItem[]
+  movimentos  MovimentoEstoque[]
+  lancamentos Lancamento[]
+
+  @@unique([empresaId, numero])
+  @@index([empresaId, status])
+}
+
+model PedidoVendaItem {
+  id            String  @id @default(uuid())
+  pedidoId      String
+  produtoId     String
+  descricao     String
+  quantidade    Decimal @db.Decimal(14, 3)
+  precoUnitario Decimal @db.Decimal(14, 2)
+  desconto      Decimal @default(0) @db.Decimal(14, 2)
+  total         Decimal @db.Decimal(14, 2)
+
+  pedido  PedidoVenda @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  produto Produto     @relation(fields: [produtoId], references: [id])
+}
+
+// ───────────────────────────── Financeiro ─────────────────────────────
+
+enum TipoLancamento {
+  PAGAR
+  RECEBER
+}
+
+enum StatusLancamento {
+  ABERTO
+  PAGO
+  CANCELADO
+}
+
+model ContaBancaria {
+  id           String   @id @default(uuid())
+  empresaId    String
+  nome         String // ex.: "Caixa", "Banco do Brasil"
+  banco        String?
+  agencia      String?
+  conta        String?
+  saldoInicial Decimal  @default(0) @db.Decimal(14, 2)
+  ativa        Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  empresa     Empresa      @relation(fields: [empresaId], references: [id])
+  lancamentos Lancamento[]
+
+  @@unique([empresaId, nome])
+}
+
+// Plano de contas simplificado (ex.: "Vendas", "Aluguel", "Salários").
+model CategoriaFinanceira {
+  id        String         @id @default(uuid())
+  empresaId String
+  nome      String
+  tipo      TipoLancamento
+  createdAt DateTime       @default(now())
+
+  empresa     Empresa      @relation(fields: [empresaId], references: [id])
+  lancamentos Lancamento[]
+
+  @@unique([empresaId, nome, tipo])
+}
+
+// Contas a pagar e a receber.
+model Lancamento {
+  id              String           @id @default(uuid())
+  empresaId       String
+  tipo            TipoLancamento
+  status          StatusLancamento @default(ABERTO)
+  descricao       String
+  pessoaId        String?
+  categoriaId     String?
+  contaBancariaId String?
+  pedidoId        String?
+  valor           Decimal          @db.Decimal(14, 2)
+  valorPago       Decimal?         @db.Decimal(14, 2)
+  vencimento      DateTime         @db.Date
+  pagoEm          DateTime?        @db.Date
+  parcela         Int              @default(1)
+  totalParcelas   Int              @default(1)
+  observacoes     String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  empresa       Empresa              @relation(fields: [empresaId], references: [id])
+  pessoa        Pessoa?              @relation(fields: [pessoaId], references: [id])
+  categoria     CategoriaFinanceira? @relation(fields: [categoriaId], references: [id])
+  contaBancaria ContaBancaria?       @relation(fields: [contaBancariaId], references: [id])
+  pedido        PedidoVenda?         @relation(fields: [pedidoId], references: [id])
+
+  @@index([empresaId, tipo, status, vencimento])
+}
