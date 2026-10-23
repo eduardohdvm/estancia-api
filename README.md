@@ -73,6 +73,18 @@ Com a API rodando, este comando testa os fluxos principais de ponta a ponta (ven
 npm run test:e2e -w apps/api
 ```
 
+## Hospedagem (Render)
+
+O arquivo [`render.yaml`](render.yaml) descreve tudo: um banco PostgreSQL e **um único serviço** que roda a API e entrega o site no mesmo endereço.
+
+1. Crie uma conta em https://render.com e conecte ao GitHub.
+2. No painel: **New → Blueprint**, escolha o repositório `verissimo-erp` e clique em **Apply**.
+3. Aguarde o build (alguns minutos). O endereço aparece no serviço `verissimo-erp` (algo como `https://verissimo-erp.onrender.com`).
+
+A cada `git push` na branch `main`, o Render publica a versão nova sozinho. Ao iniciar, o serviço aplica as migrações do banco e, com `SEED_DEMO=true`, cria a empresa de demonstração.
+
+**Plano grátis:** o serviço dorme após 15 minutos sem acesso (o primeiro acesso depois disso leva cerca de 1 minuto) e o banco grátis **expira em 30 dias**. Antes de colocar clientes de verdade, troque o banco e o serviço para planos pagos e mude `SEED_DEMO` para `false`.
+
 ## Estrutura
 
 ```

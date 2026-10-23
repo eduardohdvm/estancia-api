@@ -24,6 +24,17 @@ async function bootstrap() {
   // Em produção a API também entrega o site (gerado por `npm run build -w apps/web`).
   const site = process.env.WEB_DIST ?? join(__dirname, '..', '..', 'web', 'out');
   if (existsSync(site)) {
+    // O Next pede os arquivos de pré-carregamento como "__next.a.b.__PAGE__.txt",
+    // mas a exportação grava em pastas: "__next.a/b/__PAGE__.txt".
+    app.use((req: Request, _res: Response, next: NextFunction) => {
+      const m = req.path.match(/^(.*\/)__next\.([^/]+)\.txt$/);
+      if (m && !existsSync(join(site, req.path))) {
+        const [primeiro, ...resto] = m[2].split('.');
+        const aninhado = `${m[1]}__next.${primeiro}/${resto.join('/')}.txt`;
+        if (existsSync(join(site, aninhado))) req.url = aninhado + req.url.slice(req.path.length);
+      }
+      next();
+    });
     app.useStaticAssets(site);
     // Qualquer outro endereço que não seja da API mostra a página "não encontrada" do site.
     app.use((req: Request, res: Response, next: NextFunction) => {
