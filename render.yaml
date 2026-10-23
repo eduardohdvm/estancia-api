@@ -1,0 +1,32 @@
+# Hospedagem no Render (https://render.com).
+# No painel: New → Blueprint → escolha este repositório → Apply.
+# Cria o banco PostgreSQL e um único serviço que roda a API e entrega o site.
+
+databases:
+  - name: verissimo-db
+    plan: free # o banco grátis expira em 30 dias; troque para um plano pago antes de usar com clientes
+    region: virginia # região mais próxima do Brasil
+    databaseName: verissimo
+    user: verissimo
+
+services:
+  - type: web
+    name: verissimo-erp
+    runtime: node
+    plan: free # dorme após 15 min sem acesso e leva ~1 min para acordar
+    region: virginia
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start:prod -w apps/api
+    healthCheckPath: /api/saude
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: verissimo-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 8h
+      # Cria a empresa de demonstração (admin@demo.com / demo123). Mude para "false" quando for usar de verdade.
+      - key: SEED_DEMO
+        value: "true"

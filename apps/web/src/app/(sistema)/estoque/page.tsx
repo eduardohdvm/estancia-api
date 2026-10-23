@@ -67,7 +67,7 @@ export default function PaginaEstoque() {
             <Celula>{m.deposito.nome}</Celula>
             <Celula className="max-w-56 truncate text-slate-500">
               {m.pedido || m.pedidoCompra ? (
-                <Link href={m.pedido ? `/vendas/${m.pedido.id}` : `/compras/${m.pedidoCompra!.id}`} className="text-indigo-600 hover:underline">
+                <Link href={m.pedido ? `/vendas/ver?id=${m.pedido.id}` : `/compras/ver?id=${m.pedidoCompra!.id}`} className="text-indigo-600 hover:underline">
                   {m.observacao}
                 </Link>
               ) : (

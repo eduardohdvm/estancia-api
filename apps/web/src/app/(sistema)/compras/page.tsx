@@ -39,7 +39,7 @@ export default function PaginaCompras() {
 
       <Tabela cabecalhos={['Nº', 'Data', 'Fornecedor', 'Previsão de entrega', 'Status', 'Total']} vazio={dados?.itens.length === 0} carregando={carregando && !dados}>
         {dados?.itens.map((c) => (
-          <tr key={c.id} className="cursor-pointer hover:bg-slate-50" onClick={() => router.push(`/compras/${c.id}`)}>
+          <tr key={c.id} className="cursor-pointer hover:bg-slate-50" onClick={() => router.push(`/compras/ver?id=${c.id}`)}>
             <Celula className="font-medium text-slate-900">#{c.numero}</Celula>
             <Celula className="text-slate-500">{dataHora(c.createdAt)}</Celula>
             <Celula>{c.fornecedor.nome}</Celula>

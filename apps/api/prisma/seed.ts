@@ -10,6 +10,11 @@ import { PrismaClient } from '../src/generated/prisma/client';
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
 
 async function main() {
+  // Na hospedagem o seed roda a cada início; SEED_DEMO=false desliga a empresa de demonstração.
+  if (process.env.SEED_DEMO === 'false') {
+    console.log('SEED_DEMO=false: empresa de demonstração não será criada.');
+    return;
+  }
   if (await prisma.usuario.findUnique({ where: { email: 'admin@demo.com' } })) {
     console.log('Empresa de demonstração já existe. Nada a fazer.');
     return;

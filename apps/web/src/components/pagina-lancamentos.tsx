@@ -77,12 +77,12 @@ export function PaginaLancamentos({ tipo }: { tipo: TipoLancamento }) {
               <Celula>
                 <p className="font-medium text-slate-900">{l.descricao}</p>
                 {l.pedido && (
-                  <Link href={`/vendas/${l.pedido.id}`} className="text-xs text-indigo-600 hover:underline">
+                  <Link href={`/vendas/ver?id=${l.pedido.id}`} className="text-xs text-indigo-600 hover:underline">
                     Pedido #{l.pedido.numero} · parcela {l.parcela}/{l.totalParcelas}
                   </Link>
                 )}
                 {l.pedidoCompra && (
-                  <Link href={`/compras/${l.pedidoCompra.id}`} className="text-xs text-indigo-600 hover:underline">
+                  <Link href={`/compras/ver?id=${l.pedidoCompra.id}`} className="text-xs text-indigo-600 hover:underline">
                     Compra #{l.pedidoCompra.numero} · parcela {l.parcela}/{l.totalParcelas}
                   </Link>
                 )}

@@ -1,13 +1,14 @@
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import { FormularioCompra } from '@/components/formulario-compra';
 import { Alerta, Cabecalho } from '@/components/ui';
 import type { Compra } from '@/lib/tipos';
 import { useDados } from '@/lib/use-dados';
 
-export default function EditarCompra() {
-  const { id } = useParams<{ id: string }>();
+function EditarCompra() {
+  const id = useSearchParams().get('id') ?? '';
   const { dados, erro } = useDados<Compra>(`/compras/${id}`);
 
   return (
@@ -16,5 +17,14 @@ export default function EditarCompra() {
       <Alerta>{erro}</Alerta>
       {dados && <FormularioCompra compra={dados} />}
     </>
+  );
+}
+
+// O id vem do endereço (?id=...), o que permite publicar o site como arquivos estáticos.
+export default function Pagina() {
+  return (
+    <Suspense>
+      <EditarCompra />
+    </Suspense>
   );
 }

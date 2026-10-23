@@ -1,4 +1,6 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333/api';
+// Em desenvolvimento aponta para a API local (veja .env.local). Em produção o site
+// é servido pela própria API, então basta o caminho relativo.
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 const CHAVE_TOKEN = 'verissimo:token';
 
 export class ErroApi extends Error {

@@ -39,7 +39,7 @@ export default function PaginaVendas() {
 
       <Tabela cabecalhos={['Nº', 'Data', 'Cliente', 'Vendedor', 'Status', 'Total']} vazio={dados?.itens.length === 0} carregando={carregando && !dados}>
         {dados?.itens.map((p) => (
-          <tr key={p.id} className="cursor-pointer hover:bg-slate-50" onClick={() => router.push(`/vendas/${p.id}`)}>
+          <tr key={p.id} className="cursor-pointer hover:bg-slate-50" onClick={() => router.push(`/vendas/ver?id=${p.id}`)}>
             <Celula className="font-medium text-slate-900">#{p.numero}</Celula>
             <Celula className="text-slate-500">{dataHora(p.createdAt)}</Celula>
             <Celula>{p.cliente.nome}</Celula>

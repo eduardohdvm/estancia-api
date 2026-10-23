@@ -103,7 +103,7 @@ export default function PaginaPainel() {
               <ul className="mt-4 divide-y divide-slate-100">
                 {dados.ultimosPedidos.map((p) => (
                   <li key={p.id}>
-                    <Link href={`/vendas/${p.id}`} className="flex items-center gap-3 py-2.5 text-sm hover:bg-slate-50">
+                    <Link href={`/vendas/ver?id=${p.id}`} className="flex items-center gap-3 py-2.5 text-sm hover:bg-slate-50">
                       <span className="w-14 font-medium text-slate-900">#{p.numero}</span>
                       <span className="flex-1 truncate text-slate-700">{p.cliente.nome}</span>
                       <Status valor={p.status} />

@@ -2,8 +2,8 @@
 
 import { ArrowLeft, Ban, PackageCheck, Pencil, Printer, Send } from 'lucide-react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useState } from 'react';
 import { AcoesFormulario, Alerta, Botao, Cabecalho, Campo, Cartao, Celula, Modal, Selecao, Status, Tabela } from '@/components/ui';
 import { api } from '@/lib/api';
 import { data, dataHora, hojeIso, moeda, numero, vencido } from '@/lib/formato';
@@ -11,8 +11,8 @@ import { useSessao } from '@/lib/sessao';
 import type { Compra, ContaBancaria } from '@/lib/tipos';
 import { useDados } from '@/lib/use-dados';
 
-export default function DetalheCompra() {
-  const { id } = useParams<{ id: string }>();
+function DetalheCompra() {
+  const id = useSearchParams().get('id') ?? '';
   const { pode } = useSessao();
   const { dados: compra, erro, recarregar } = useDados<Compra>(`/compras/${id}`);
   const [receberAberto, setReceberAberto] = useState(false);
@@ -47,7 +47,7 @@ export default function DetalheCompra() {
             <Printer className="size-4" /> Imprimir
           </Botao>
           {pendente && (
-            <Link href={`/compras/${id}/editar`} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+            <Link href={`/compras/editar?id=${id}`} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
               <Pencil className="size-4" /> Editar
             </Link>
           )}
@@ -210,5 +210,14 @@ function ModalReceber({ compra, aoFechar, aoReceber }: { compra: Compra; aoFecha
         <AcoesFormulario aoCancelar={aoFechar} salvando={salvando} textoSalvar="Confirmar recebimento" />
       </form>
     </Modal>
+  );
+}
+
+// O id vem do endereço (?id=...), o que permite publicar o site como arquivos estáticos.
+export default function Pagina() {
+  return (
+    <Suspense>
+      <DetalheCompra />
+    </Suspense>
   );
 }

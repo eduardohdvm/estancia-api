@@ -2,8 +2,8 @@
 
 import { ArrowLeft, Ban, CheckCircle2, FileCheck2, Pencil, Printer } from 'lucide-react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useState } from 'react';
 import { AcoesFormulario, Alerta, Botao, Cabecalho, Campo, Cartao, Celula, Modal, Selecao, Status, Tabela } from '@/components/ui';
 import { api } from '@/lib/api';
 import { data, dataHora, hojeIso, moeda, numero, vencido } from '@/lib/formato';
@@ -11,8 +11,8 @@ import { useSessao } from '@/lib/sessao';
 import type { ContaBancaria, Pedido } from '@/lib/tipos';
 import { useDados } from '@/lib/use-dados';
 
-export default function DetalhePedido() {
-  const { id } = useParams<{ id: string }>();
+function DetalhePedido() {
+  const id = useSearchParams().get('id') ?? '';
   const { pode } = useSessao();
   const { dados: pedido, erro, recarregar } = useDados<Pedido>(`/pedidos/${id}`);
   const [faturarAberto, setFaturarAberto] = useState(false);
@@ -47,7 +47,7 @@ export default function DetalhePedido() {
             <Printer className="size-4" /> Imprimir
           </Botao>
           {aberto && (
-            <Link href={`/vendas/${id}/editar`} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+            <Link href={`/vendas/editar?id=${id}`} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
               <Pencil className="size-4" /> Editar
             </Link>
           )}
@@ -209,5 +209,14 @@ function ModalFaturar({ pedido, aoFechar, aoFaturar }: { pedido: Pedido; aoFecha
         <AcoesFormulario aoCancelar={aoFechar} salvando={salvando} textoSalvar="Confirmar faturamento" />
       </form>
     </Modal>
+  );
+}
+
+// O id vem do endereço (?id=...), o que permite publicar o site como arquivos estáticos.
+export default function Pagina() {
+  return (
+    <Suspense>
+      <DetalhePedido />
+    </Suspense>
   );
 }

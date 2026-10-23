@@ -1,5 +1,10 @@
-import { redirect } from 'next/navigation';
+'use client';
+
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function Inicio() {
-  redirect('/painel');
+  const router = useRouter();
+  useEffect(() => router.replace('/painel'), [router]);
+  return null;
 }

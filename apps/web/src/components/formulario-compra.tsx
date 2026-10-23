@@ -87,7 +87,7 @@ export function FormularioCompra({ compra }: { compra?: Compra }) {
     };
     try {
       const salva = await api<Compra>(compra ? `/compras/${compra.id}` : '/compras', { metodo: compra ? 'PUT' : 'POST', corpo });
-      router.push(`/compras/${salva.id}`);
+      router.push(`/compras/ver?id=${salva.id}`);
     } catch (e) {
       setErro((e as Error).message);
       setSalvando(false);

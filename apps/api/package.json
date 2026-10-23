@@ -4,13 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "nest start --watch",
-    "build": "nest build",
+    "build": "prisma generate && nest build",
     "start": "node dist/main.js",
     "db:dev": "prisma dev",
     "db:migrate": "prisma migrate dev && prisma generate",
     "db:generate": "prisma generate",
     "db:seed": "prisma db seed",
-    "test:e2e": "node test/fase1.e2e.mjs && node test/fase2.e2e.mjs"
+    "test:e2e": "node test/fase1.e2e.mjs && node test/fase2.e2e.mjs",
+    "start:prod": "prisma migrate deploy && prisma db seed && node dist/main.js"
   },
   "dependencies": {
     "@nestjs/common": "^12.2.0",
@@ -24,6 +25,7 @@
     "bcryptjs": "^3.0.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
+    "dotenv": "^18.0.3",
     "pg": "^8.23.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2"
@@ -34,7 +36,6 @@
     "@types/express": "^5.0.6",
     "@types/node": "^26.6.5",
     "@types/pg": "^8.23.1",
-    "dotenv": "^18.0.3",
     "prisma": "^7.10.1",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3"

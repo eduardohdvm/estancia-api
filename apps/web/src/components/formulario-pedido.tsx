@@ -80,7 +80,7 @@ export function FormularioPedido({ pedido, clienteInicial }: { pedido?: Pedido; 
     };
     try {
       const salvo = await api<Pedido>(pedido ? `/pedidos/${pedido.id}` : '/pedidos', { metodo: pedido ? 'PUT' : 'POST', corpo });
-      router.push(`/vendas/${salvo.id}`);
+      router.push(`/vendas/ver?id=${salvo.id}`);
     } catch (e) {
       setErro((e as Error).message);
       setSalvando(false);
