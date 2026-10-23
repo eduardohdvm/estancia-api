@@ -275,14 +275,16 @@ model PedidoVenda {
 }
 
 model PedidoVendaItem {
-  id            String  @id @default(uuid())
+  id            String   @id @default(uuid())
   pedidoId      String
   produtoId     String
   descricao     String
-  quantidade    Decimal @db.Decimal(14, 3)
-  precoUnitario Decimal @db.Decimal(14, 2)
-  desconto      Decimal @default(0) @db.Decimal(14, 2)
-  total         Decimal @db.Decimal(14, 2)
+  quantidade    Decimal  @db.Decimal(14, 3)
+  precoUnitario Decimal  @db.Decimal(14, 2)
+  desconto      Decimal  @default(0) @db.Decimal(14, 2)
+  total         Decimal  @db.Decimal(14, 2)
+  // Custo do produto no momento do faturamento (para margem e CMV nos relatórios).
+  custoUnitario Decimal? @db.Decimal(14, 2)
 
   pedido  PedidoVenda @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
   produto Produto     @relation(fields: [produtoId], references: [id])

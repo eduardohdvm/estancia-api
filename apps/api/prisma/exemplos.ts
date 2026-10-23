@@ -307,7 +307,7 @@ export async function popularExemplos(tx: Tx, empresaId: string) {
             faturadoEm,
             createdAt: data,
             updatedAt: faturadoEm ?? data,
-            itens: { create: itens.map((i) => ({ produtoId: i.p.id, descricao: i.p.nome, quantidade: i.quantidade, precoUnitario: i.preco, total: centavos(i.quantidade * i.preco) })) },
+            itens: { create: itens.map((i) => ({ produtoId: i.p.id, descricao: i.p.nome, quantidade: i.quantidade, precoUnitario: i.preco, total: centavos(i.quantidade * i.preco), custoUnitario: i.p.custo })) },
           },
         });
         if (!faturadoEm) return;
@@ -371,7 +371,7 @@ export async function popularExemplos(tx: Tx, empresaId: string) {
               faturadoEm: data,
               createdAt: data,
               updatedAt: data,
-              itens: { create: itens.map((i) => ({ produtoId: i.p.id, descricao: i.p.nome, quantidade: i.quantidade, precoUnitario: i.p.venda, total: centavos(i.quantidade * i.p.venda) })) },
+              itens: { create: itens.map((i) => ({ produtoId: i.p.id, descricao: i.p.nome, quantidade: i.quantidade, precoUnitario: i.p.venda, total: centavos(i.quantidade * i.p.venda), custoUnitario: i.p.custo })) },
               pagamentos: { create: [{ forma, valor, troco, caixaId: sessao.id }] },
             },
           });

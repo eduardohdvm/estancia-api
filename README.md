@@ -25,6 +25,18 @@ Ao **faturar** um pedido, o sistema baixa o estoque e gera as parcelas no contas
 | **Compras** | Pedido de compra (rascunho → enviado → recebido), sugestão de compra pelo estoque mínimo, recebimento com entrada no estoque, custo médio com rateio de frete e desconto, parcelas no contas a pagar, cancelamento com estorno do estoque |
 | **CRM** | Funil de vendas em quadro (arrastar entre etapas), negócios com cliente ou contato avulso, previsão ponderada e taxa de conversão, motivo de perda, histórico de ligações/WhatsApp/reuniões, tarefas e follow-ups com prazo, "criar pedido" a partir de um negócio ganho |
 
+### Relatórios
+
+| Relatório | O que mostra |
+|---|---|
+| **Vendas por período** | Faturamento, pedidos, ticket médio, custo, lucro bruto e margem, por dia, semana ou mês, com gráfico |
+| **Vendas por produto** | Quantidade, faturamento, custo, lucro, margem e participação de cada produto; ranking dos 10 maiores |
+| **Vendas por vendedor** | Pedidos, faturamento, ticket médio, lucro e participação de cada vendedor |
+| **Curva ABC** | Produtos classificados em A (80% do faturamento), B (15%) e C (5%), e a lista de produtos sem venda |
+| **DRE gerencial** | Receita, descontos, CMV, lucro bruto, despesas por categoria e resultado, mês a mês |
+
+Todos filtram por período (com atalhos como "mês passado" e "últimos 6 meses") e por origem (pedidos ou PDV), e exportam para **Excel** e **PDF**. O custo de cada item é gravado no momento do faturamento, então a margem não muda quando o preço de custo do produto é atualizado depois.
+
 Cada venda do PDV já sai faturada: baixa o estoque e lança os valores no financeiro (à vista como recebido, crediário como conta a receber em aberto). Sangria e suprimento mexem apenas no dinheiro da gaveta, não no saldo das contas.
 
 O módulo fiscal (NF-e, NFC-e, NFS-e) fica para uma fase posterior.

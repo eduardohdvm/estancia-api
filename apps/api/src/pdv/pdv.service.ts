@@ -193,9 +193,10 @@ export class PdvService {
 
     const produtos = await this.prisma.produto.findMany({
       where: { id: { in: itens.map((i) => i.produtoId) } },
-      select: { id: true, servico: true },
+      select: { id: true, servico: true, precoCusto: true },
     });
     const servico = new Set(produtos.filter((p) => p.servico).map((p) => p.id));
+    const custo = new Map(produtos.map((p) => [p.id, p.precoCusto]));
     const categoria = await this.prisma.categoriaFinanceira.findFirst({ where: { empresaId, tipo: 'RECEBER', nome: 'Vendas' } });
 
     return this.prisma.$transaction(async (tx) => {
@@ -211,7 +212,7 @@ export class PdvService {
           status: 'FATURADO',
           faturadoEm: new Date(),
           parcelas: 1,
-          itens: { create: itens },
+          itens: { create: itens.map((i) => ({ ...i, custoUnitario: custo.get(i.produtoId) })) },
           pagamentos: { create: pagamentos.map((p) => ({ ...p, caixaId: caixa.id })) },
         },
       });

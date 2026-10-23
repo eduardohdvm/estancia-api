@@ -10,7 +10,7 @@
     "db:migrate": "prisma migrate dev && prisma generate",
     "db:generate": "prisma generate",
     "db:seed": "prisma db seed",
-    "test:e2e": "node test/fase1.e2e.mjs && node test/fase2.e2e.mjs",
+    "test:e2e": "node test/fase1.e2e.mjs && node test/fase2.e2e.mjs && node test/relatorios.e2e.mjs",
     "start:prod": "prisma migrate deploy && prisma db seed && node dist/main.js"
   },
   "dependencies": {

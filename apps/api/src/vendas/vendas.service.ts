@@ -104,6 +104,8 @@ export class VendasService {
 
     return this.prisma.$transaction(async (tx) => {
       for (const item of pedido.itens) {
+        // Guarda o custo de agora: é ele que entra na margem e no CMV dos relatórios.
+        await tx.pedidoVendaItem.update({ where: { id: item.id }, data: { custoUnitario: item.produto.precoCusto } });
         if (item.produto.servico) continue;
         await this.estoque.movimentar(tx, {
           empresaId,

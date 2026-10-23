@@ -14,6 +14,7 @@ import { PdvModule } from './pdv/pdv.module';
 import { PessoasModule } from './pessoas/pessoas.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProdutosModule } from './produtos/produtos.module';
+import { RelatoriosModule } from './relatorios/relatorios.module';
 import { SaudeController } from './saude.controller';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { VendasModule } from './vendas/vendas.module';
@@ -38,6 +39,7 @@ import { VendasModule } from './vendas/vendas.module';
     PdvModule,
     ComprasModule,
     CrmModule,
+    RelatoriosModule,
   ],
   controllers: [SaudeController],
   providers: [

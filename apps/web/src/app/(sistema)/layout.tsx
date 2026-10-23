@@ -3,6 +3,7 @@
 import {
   ArrowDownCircle,
   ArrowUpCircle,
+  BarChart3,
   Boxes,
   Building2,
   CalendarCheck,
@@ -71,6 +72,7 @@ const menu: { grupo: string; itens: ItemMenu[] }[] = [
       { href: '/pdv/caixas', rotulo: 'Fechamentos de caixa', icone: Receipt, perfis: ['GERENTE'] },
     ],
   },
+  { grupo: 'Análises', itens: [{ href: '/relatorios', rotulo: 'Relatórios', icone: BarChart3, perfis: ['GERENTE', 'FINANCEIRO'] }] },
   { grupo: 'Configurações', itens: [{ href: '/usuarios', rotulo: 'Usuários', icone: UserCog, perfis: [] }] },
 ];
 
