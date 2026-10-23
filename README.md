@@ -65,6 +65,8 @@ npm run dev:web
 
 Acesse http://localhost:3000 e entre com **admin@demo.com / demo123**, ou cadastre uma empresa nova.
 
+A empresa de demonstração vem com seis meses de histórico: 20 produtos, clientes e fornecedores, compras, vendas, caixas do PDV, despesas fixas e negócios no CRM. Há um usuário para cada perfil, todos com a senha `demo123`: `admin@`, `gerente@`, `vendedor@`, `financeiro@`, `estoque@` e `caixa@demo.com`. O histórico é gerado uma única vez (em [`prisma/exemplos.ts`](apps/api/prisma/exemplos.ts)), quando a empresa de demonstração ainda não tem pedidos.
+
 ### Testes
 
 Com a API rodando, este comando testa os fluxos principais de ponta a ponta (vendas, estoque, financeiro, PDV, compras, CRM, perfis e separação entre empresas). Cada execução cria uma empresa nova, então não estraga seus dados:

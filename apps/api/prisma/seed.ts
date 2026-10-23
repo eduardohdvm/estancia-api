@@ -1,11 +1,12 @@
-// Cria uma empresa de demonstração com dados de exemplo.
+// Cria uma empresa de demonstração com seis meses de dados de exemplo.
 // Rode com: npm run db:seed
-// Login: admin@demo.com / demo123
+// Login: admin@demo.com / demo123 (também gerente@, vendedor@, financeiro@, estoque@ e caixa@demo.com)
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import bcrypt from 'bcryptjs';
 import { criarCadastrosIniciais } from '../src/auth/auth.service';
 import { PrismaClient } from '../src/generated/prisma/client';
+import { popularExemplos } from './exemplos';
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
 
@@ -15,11 +16,18 @@ async function main() {
     console.log('SEED_DEMO=false: empresa de demonstração não será criada.');
     return;
   }
-  if (await prisma.usuario.findUnique({ where: { email: 'admin@demo.com' } })) {
-    console.log('Empresa de demonstração já existe. Nada a fazer.');
+  if (!(await prisma.usuario.findUnique({ where: { email: 'admin@demo.com' } }))) await criarEmpresaDemo();
+
+  // Histórico de seis meses, gerado só enquanto a empresa de demonstração não tem pedidos.
+  const { empresaId } = await prisma.usuario.findUniqueOrThrow({ where: { email: 'admin@demo.com' } });
+  if (await prisma.pedidoVenda.count({ where: { empresaId } })) {
+    console.log('Empresa de demonstração já tem movimento. Nada a fazer.');
     return;
   }
+  await prisma.$transaction((tx) => popularExemplos(tx, empresaId), { timeout: 300_000, maxWait: 30_000 });
+}
 
+async function criarEmpresaDemo() {
   await prisma.$transaction(async (tx) => {
     const empresa = await tx.empresa.create({
       data: { nome: 'Loja Demonstração Ltda', cnpj: '00.000.000/0001-00', plano: 'PROFISSIONAL' },

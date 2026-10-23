@@ -21,6 +21,9 @@ interface Painel {
   ultimosPedidos: { id: string; numero: number; status: StatusPedido; total: string; cliente: { nome: string } }[];
 }
 
+// Rótulos curtos nas barras (ex.: "19,4 mil") para caberem em telas menores.
+const compacto = new Intl.NumberFormat('pt-BR', { notation: 'compact', maximumFractionDigits: 1 });
+
 const nomeMes = (mes: string) =>
   new Date(`${mes}-15`).toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
 
@@ -60,8 +63,8 @@ export default function PaginaPainel() {
               <h2 className="font-semibold text-slate-900">Vendas faturadas — últimos 6 meses</h2>
               <div className="mt-6 flex h-48 items-end gap-3">
                 {dados.vendasPorMes.map((m) => (
-                  <div key={m.mes} className="flex h-full flex-1 flex-col items-center justify-end gap-2">
-                    <span className="text-xs tabular-nums text-slate-500">{m.total ? moeda(m.total).replace(',00', '') : ''}</span>
+                  <div key={m.mes} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-2">
+                    <span className="text-xs tabular-nums text-slate-500">{m.total ? compacto.format(m.total) : ''}</span>
                     <div className="w-full max-w-12 rounded-t-md bg-indigo-500" style={{ height: `${Math.max(2, (m.total / maior) * 100)}%` }} title={moeda(m.total)} />
                     <span className="text-xs capitalize text-slate-500">{nomeMes(m.mes)}</span>
                   </div>
