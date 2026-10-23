@@ -19,13 +19,13 @@ interface Item {
 const itemVazio: Item = { produtoId: '', quantidade: '1', precoUnitario: '', desconto: '0' };
 
 /** Formulário de criação e edição de pedido de venda. */
-export function FormularioPedido({ pedido }: { pedido?: Pedido }) {
+export function FormularioPedido({ pedido, clienteInicial }: { pedido?: Pedido; clienteInicial?: string }) {
   const router = useRouter();
   const clientes = useDados<Paginado<Pessoa>>('/pessoas?papel=cliente&porPagina=200');
   const produtos = useDados<Paginado<Produto>>('/produtos?porPagina=200');
   const depositos = useDados<Deposito[]>('/estoque/depositos');
 
-  const [clienteId, setClienteId] = useState(pedido?.clienteId ?? '');
+  const [clienteId, setClienteId] = useState(pedido?.clienteId ?? clienteInicial ?? '');
   const [depositoId, setDepositoId] = useState(pedido?.depositoId ?? '');
   const [itens, setItens] = useState<Item[]>(
     pedido?.itens.map((i) => ({

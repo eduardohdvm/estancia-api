@@ -11,9 +11,10 @@ import { useDados } from '@/lib/use-dados';
 const descricaoPerfil: Record<Perfil, string> = {
   ADMIN: 'Acesso total, inclusive usuários',
   GERENTE: 'Tudo, exceto gerenciar usuários',
-  VENDEDOR: 'Vendas, clientes e consulta de produtos',
+  VENDEDOR: 'Vendas, PDV, CRM e clientes',
   FINANCEIRO: 'Contas a pagar e receber, caixa e bancos',
-  ESTOQUISTA: 'Produtos e movimentações de estoque',
+  ESTOQUISTA: 'Produtos, estoque e compras',
+  CAIXA: 'Somente a frente de caixa (PDV)',
 };
 
 const vazio = { nome: '', email: '', senha: '', perfil: 'VENDEDOR' as Perfil, ativo: true };

@@ -5,12 +5,17 @@ import {
   ArrowUpCircle,
   Boxes,
   Building2,
+  CalendarCheck,
+  ClipboardList,
+  KanbanSquare,
   LayoutDashboard,
   Landmark,
   Loader2,
   LogOut,
   Menu,
+  Monitor,
   Package,
+  Receipt,
   ShoppingCart,
   Truck,
   UserCog,
@@ -27,21 +32,33 @@ import type { Perfil } from '@/lib/tipos';
 
 type ItemMenu = { href: string; rotulo: string; icone: React.ElementType; perfis?: Perfil[] };
 
+/** Todos os perfis menos o operador de caixa, que só usa o PDV. */
+const RETAGUARDA: Perfil[] = ['GERENTE', 'VENDEDOR', 'FINANCEIRO', 'ESTOQUISTA'];
+
 const menu: { grupo: string; itens: ItemMenu[] }[] = [
-  { grupo: '', itens: [{ href: '/painel', rotulo: 'Painel', icone: LayoutDashboard }] },
+  { grupo: '', itens: [{ href: '/painel', rotulo: 'Painel', icone: LayoutDashboard, perfis: RETAGUARDA }] },
   {
     grupo: 'Cadastros',
     itens: [
       { href: '/clientes', rotulo: 'Clientes', icone: Users },
-      { href: '/fornecedores', rotulo: 'Fornecedores', icone: Truck },
+      { href: '/fornecedores', rotulo: 'Fornecedores', icone: Truck, perfis: RETAGUARDA },
       { href: '/produtos', rotulo: 'Produtos e serviços', icone: Package },
     ],
   },
   {
     grupo: 'Operação',
     itens: [
+      { href: '/pdv', rotulo: 'Frente de caixa (PDV)', icone: Monitor, perfis: ['GERENTE', 'VENDEDOR', 'CAIXA'] },
       { href: '/vendas', rotulo: 'Vendas', icone: ShoppingCart, perfis: ['GERENTE', 'VENDEDOR'] },
-      { href: '/estoque', rotulo: 'Estoque', icone: Boxes },
+      { href: '/compras', rotulo: 'Compras', icone: ClipboardList, perfis: ['GERENTE', 'ESTOQUISTA'] },
+      { href: '/estoque', rotulo: 'Estoque', icone: Boxes, perfis: RETAGUARDA },
+    ],
+  },
+  {
+    grupo: 'CRM',
+    itens: [
+      { href: '/crm', rotulo: 'Funil de vendas', icone: KanbanSquare, perfis: ['GERENTE', 'VENDEDOR'] },
+      { href: '/crm/tarefas', rotulo: 'Tarefas e follow-ups', icone: CalendarCheck, perfis: ['GERENTE', 'VENDEDOR'] },
     ],
   },
   {
@@ -51,6 +68,7 @@ const menu: { grupo: string; itens: ItemMenu[] }[] = [
       { href: '/financeiro/receber', rotulo: 'Contas a receber', icone: ArrowDownCircle, perfis: ['GERENTE', 'FINANCEIRO'] },
       { href: '/financeiro/pagar', rotulo: 'Contas a pagar', icone: ArrowUpCircle, perfis: ['GERENTE', 'FINANCEIRO'] },
       { href: '/financeiro/contas', rotulo: 'Caixa e bancos', icone: Landmark, perfis: ['GERENTE', 'FINANCEIRO'] },
+      { href: '/pdv/caixas', rotulo: 'Fechamentos de caixa', icone: Receipt, perfis: ['GERENTE'] },
     ],
   },
   { grupo: 'Configurações', itens: [{ href: '/usuarios', rotulo: 'Usuários', icone: UserCog, perfis: [] }] },

@@ -5,9 +5,12 @@ import { JwtModule } from '@nestjs/jwt';
 import { AuthModule } from './auth/auth.module';
 import { AuthGuard } from './common/auth.guard';
 import { PrismaErroFilter } from './common/prisma-erro.filter';
+import { ComprasModule } from './compras/compras.module';
+import { CrmModule } from './crm/crm.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { EstoqueModule } from './estoque/estoque.module';
 import { FinanceiroModule } from './financeiro/financeiro.module';
+import { PdvModule } from './pdv/pdv.module';
 import { PessoasModule } from './pessoas/pessoas.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProdutosModule } from './produtos/produtos.module';
@@ -31,6 +34,9 @@ import { VendasModule } from './vendas/vendas.module';
     VendasModule,
     FinanceiroModule,
     DashboardModule,
+    PdvModule,
+    ComprasModule,
+    CrmModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: AuthGuard },

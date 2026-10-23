@@ -4,7 +4,7 @@ import { paginar, resultado } from '../common/paginacao';
 import { UsuarioLogado } from '../common/usuario-logado';
 import { EstoqueService } from '../estoque/estoque.service';
 import { Prisma } from '../generated/prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService, Tx } from '../prisma/prisma.service';
 import { FaturarPedidoDto, FiltroPedidoDto, SalvarPedidoDto } from './vendas.dto';
 
 const incluir = {
@@ -51,15 +51,14 @@ export class VendasService {
   }
 
   async criar(usuario: UsuarioLogado, dto: SalvarPedidoDto) {
-    const dados = await this.montar(usuario.empresaId, dto);
+    const dados = await this.calcular(usuario.empresaId, dto);
     return this.prisma.$transaction(async (tx) => {
-      const ultimo = await tx.pedidoVenda.aggregate({ where: { empresaId: usuario.empresaId }, _max: { numero: true } });
       return tx.pedidoVenda.create({
         data: {
           ...dados.pedido,
           empresaId: usuario.empresaId,
           vendedorId: usuario.id,
-          numero: (ultimo._max.numero ?? 0) + 1,
+          numero: await proximoNumeroPedido(tx, usuario.empresaId),
           itens: { create: dados.itens },
         },
         include: incluir,
@@ -72,7 +71,7 @@ export class VendasService {
     if (pedido.status !== 'ORCAMENTO' && pedido.status !== 'APROVADO') {
       throw new BadRequestException('Só é possível editar orçamentos e pedidos aprovados');
     }
-    const dados = await this.montar(empresaId, dto);
+    const dados = await this.calcular(empresaId, dto);
     return this.prisma.pedidoVenda.update({
       where: { id },
       data: { ...dados.pedido, itens: { deleteMany: {}, create: dados.itens } },
@@ -157,6 +156,7 @@ export class VendasService {
       include: { itens: { include: { produto: true } }, lancamentos: true },
     });
     if (pedido.status === 'CANCELADO') throw new BadRequestException('Este pedido já está cancelado');
+    if (pedido.origem === 'PDV') throw new BadRequestException('Vendas do PDV são canceladas pela frente de caixa');
     if (pedido.lancamentos.some((l) => l.status === 'PAGO')) {
       throw new BadRequestException('Há parcelas já recebidas. Estorne os recebimentos antes de cancelar');
     }
@@ -183,7 +183,7 @@ export class VendasService {
   }
 
   /** Confere cliente, depósito e produtos e calcula os totais do pedido. */
-  private async montar(empresaId: string, dto: SalvarPedidoDto) {
+  async calcular(empresaId: string, dto: SalvarPedidoDto) {
     const cliente = await this.prisma.pessoa.findFirst({ where: { id: dto.clienteId, empresaId } });
     if (!cliente) throw new BadRequestException('Cliente não encontrado');
 
@@ -225,4 +225,10 @@ export class VendasService {
       itens,
     };
   }
+}
+
+/** Próximo número de pedido da empresa (vendas e PDV compartilham a numeração). */
+export async function proximoNumeroPedido(tx: Tx, empresaId: string) {
+  const ultimo = await tx.pedidoVenda.aggregate({ where: { empresaId }, _max: { numero: true } });
+  return (ultimo._max.numero ?? 0) + 1;
 }

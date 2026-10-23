@@ -7,5 +7,6 @@ import { VendasService } from './vendas.service';
   imports: [EstoqueModule],
   controllers: [VendasController],
   providers: [VendasService],
+  exports: [VendasService],
 })
 export class VendasModule {}

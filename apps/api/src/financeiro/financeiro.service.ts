@@ -17,6 +17,7 @@ const incluir = {
   categoria: { select: { id: true, nome: true } },
   contaBancaria: { select: { id: true, nome: true } },
   pedido: { select: { id: true, numero: true } },
+  pedidoCompra: { select: { id: true, numero: true } },
 } satisfies Prisma.LancamentoInclude;
 
 @Injectable()

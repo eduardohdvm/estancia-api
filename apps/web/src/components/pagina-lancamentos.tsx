@@ -81,6 +81,11 @@ export function PaginaLancamentos({ tipo }: { tipo: TipoLancamento }) {
                     Pedido #{l.pedido.numero} · parcela {l.parcela}/{l.totalParcelas}
                   </Link>
                 )}
+                {l.pedidoCompra && (
+                  <Link href={`/compras/${l.pedidoCompra.id}`} className="text-xs text-indigo-600 hover:underline">
+                    Compra #{l.pedidoCompra.numero} · parcela {l.parcela}/{l.totalParcelas}
+                  </Link>
+                )}
                 {l.status === 'PAGO' && (
                   <p className="text-xs text-slate-500">
                     {receber ? 'Recebido' : 'Pago'} em {data(l.pagoEm)} · {l.contaBancaria?.nome}

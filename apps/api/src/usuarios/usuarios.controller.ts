@@ -14,6 +14,13 @@ export class UsuariosController {
     return this.usuarios.listar(u.empresaId);
   }
 
+  /** Nome dos usuários ativos, para escolher responsáveis (ex.: no CRM). Liberado a todos os perfis. */
+  @Perfis('GERENTE', 'VENDEDOR', 'FINANCEIRO', 'ESTOQUISTA', 'CAIXA')
+  @Get('equipe')
+  equipe(@Usuario() u: UsuarioLogado) {
+    return this.usuarios.equipe(u.empresaId);
+  }
+
   @Post()
   criar(@Usuario() u: UsuarioLogado, @Body() dto: CriarUsuarioDto) {
     return this.usuarios.criar(u.empresaId, dto);

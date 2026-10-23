@@ -14,6 +14,7 @@ export interface Movimento {
   custoUnitario?: number;
   observacao?: string;
   pedidoId?: string;
+  pedidoCompraId?: string;
   usuarioId?: string;
 }
 
@@ -87,6 +88,7 @@ export class EstoqueService {
           produto: { select: { id: true, codigo: true, nome: true, unidade: true } },
           deposito: { select: { id: true, nome: true } },
           pedido: { select: { id: true, numero: true } },
+          pedidoCompra: { select: { id: true, numero: true } },
         },
         orderBy: { createdAt: 'desc' },
         ...paginar(filtro),

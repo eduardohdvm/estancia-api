@@ -7,9 +7,10 @@
     "build": "nest build",
     "start": "node dist/main.js",
     "db:dev": "prisma dev",
-    "db:migrate": "prisma migrate dev",
+    "db:migrate": "prisma migrate dev && prisma generate",
     "db:generate": "prisma generate",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "test:e2e": "node test/fase1.e2e.mjs && node test/fase2.e2e.mjs"
   },
   "dependencies": {
     "@nestjs/common": "^12.2.0",

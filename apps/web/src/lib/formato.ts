@@ -27,4 +27,40 @@ export const rotuloPerfil: Record<string, string> = {
   VENDEDOR: 'Vendedor',
   FINANCEIRO: 'Financeiro',
   ESTOQUISTA: 'Estoquista',
+  CAIXA: 'Operador de caixa',
 };
+
+export const rotuloForma: Record<string, string> = {
+  DINHEIRO: 'Dinheiro',
+  PIX: 'Pix',
+  CARTAO_DEBITO: 'Cartão de débito',
+  CARTAO_CREDITO: 'Cartão de crédito',
+  CREDIARIO: 'Crediário',
+};
+
+export const rotuloEtapa: Record<string, string> = {
+  PROSPECCAO: 'Prospecção',
+  QUALIFICACAO: 'Qualificação',
+  PROPOSTA: 'Proposta',
+  NEGOCIACAO: 'Negociação',
+  GANHO: 'Ganho',
+  PERDIDO: 'Perdido',
+};
+
+export const rotuloAtividade: Record<string, string> = {
+  LIGACAO: 'Ligação',
+  WHATSAPP: 'WhatsApp',
+  EMAIL: 'E-mail',
+  REUNIAO: 'Reunião',
+  VISITA: 'Visita',
+  TAREFA: 'Tarefa',
+  NOTA: 'Anotação',
+};
+
+/** Converte "AAAA-MM-DDTHH:mm" do <input type="datetime-local"> e vice-versa. */
+export function paraDataHoraLocal(iso: string | null) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}

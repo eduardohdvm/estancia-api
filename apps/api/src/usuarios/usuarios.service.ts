@@ -13,6 +13,10 @@ export class UsuariosService {
     return this.prisma.usuario.findMany({ where: { empresaId }, select: campos, orderBy: { nome: 'asc' } });
   }
 
+  equipe(empresaId: string) {
+    return this.prisma.usuario.findMany({ where: { empresaId, ativo: true }, select: { id: true, nome: true }, orderBy: { nome: 'asc' } });
+  }
+
   async criar(empresaId: string, { senha, ...dto }: CriarUsuarioDto) {
     const email = dto.email.toLowerCase();
     if (await this.prisma.usuario.findUnique({ where: { email } })) {

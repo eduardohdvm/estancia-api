@@ -227,6 +227,10 @@ const statusInfo: Record<string, [string, keyof typeof tons]> = {
   ENTRADA: ['Entrada', 'verde'],
   SAIDA: ['Saída', 'vermelho'],
   AJUSTE: ['Ajuste', 'roxo'],
+  RASCUNHO: ['Rascunho', 'cinza'],
+  ENVIADO: ['Aguardando entrega', 'azul'],
+  RECEBIDO: ['Recebido', 'verde'],
+  FECHADO: ['Fechado', 'cinza'],
 };
 
 export function Status({ valor }: { valor: string }) {
