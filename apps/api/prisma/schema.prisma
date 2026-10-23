@@ -68,13 +68,28 @@ model Usuario {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  empresa       Empresa        @relation(fields: [empresaId], references: [id])
+  empresa       Empresa            @relation(fields: [empresaId], references: [id])
   pedidos       PedidoVenda[]
   caixas        Caixa[]
   oportunidades Oportunidade[]
   atividades    Atividade[]
+  recuperacoes  RecuperacaoSenha[]
 
   @@index([empresaId])
+}
+
+// Link de "esqueci minha senha". Só o hash do token fica no banco.
+model RecuperacaoSenha {
+  id        String    @id @default(uuid())
+  usuarioId String
+  tokenHash String    @unique
+  expiraEm  DateTime
+  usadoEm   DateTime?
+  createdAt DateTime  @default(now())
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
 }
 
 // ───────────────────────────── Cadastros ─────────────────────────────

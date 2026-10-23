@@ -15,3 +15,6 @@ Thumbs.db
 .claude/settings.local.json
 apps/web/next-env.d.ts
 *.tsbuildinfo
+
+# E-mails gravados em arquivo quando o SMTP não está configurado
+apps/api/.emails/

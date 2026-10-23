@@ -1,9 +1,38 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import bcrypt from 'bcryptjs';
+import { createHash, randomBytes } from 'node:crypto';
+import { LimiteTentativas } from '../common/limite';
 import { UsuarioLogado } from '../common/usuario-logado';
+import { Email, EmailService } from '../email/email.module';
 import { PrismaService, Tx } from '../prisma/prisma.service';
-import { LoginDto, RegistrarDto } from './auth.dto';
+import { EsqueciSenhaDto, LoginDto, RedefinirSenhaDto, RegistrarDto } from './auth.dto';
+
+const VALIDADE_LINK_MS = 60 * 60 * 1000; // 1 hora
+const limitePorIp = new LimiteTentativas(20, 15 * 60 * 1000);
+const limitePorEmail = new LimiteTentativas(3, 15 * 60 * 1000);
+
+const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
+
+/** Endereço público do site, usado nos links dos e-mails. */
+const urlDoSite = () => (process.env.APP_URL ?? process.env.RENDER_EXTERNAL_URL ?? process.env.WEB_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+
+function emailRecuperacao(nome: string, para: string, link: string): Email {
+  const primeiroNome = nome.split(' ')[0];
+  return {
+    para,
+    assunto: 'Verissimo ERP - criar uma senha nova',
+    texto: `Olá, ${primeiroNome}!\n\nRecebemos um pedido para criar uma senha nova no Verissimo ERP.\nAbra o link abaixo (vale por 1 hora):\n\n${link}\n\nSe não foi você, ignore este e-mail: sua senha continua a mesma.`,
+    html: `<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;color:#0f172a">
+  <h2 style="color:#4f46e5">Verissimo ERP</h2>
+  <p>Olá, ${primeiroNome}!</p>
+  <p>Recebemos um pedido para criar uma senha nova. Clique no botão abaixo (o link vale por 1 hora):</p>
+  <p style="margin:28px 0"><a href="${link}" style="background:#4f46e5;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none">Criar senha nova</a></p>
+  <p style="font-size:13px;color:#64748b">Se o botão não funcionar, copie este endereço no navegador:<br>${link}</p>
+  <p style="font-size:13px;color:#64748b">Se não foi você, ignore este e-mail: sua senha continua a mesma.</p>
+</div>`,
+  };
+}
 
 type UsuarioComEmpresa = {
   id: string;
@@ -16,9 +45,12 @@ type UsuarioComEmpresa = {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
+    private readonly email: EmailService,
   ) {}
 
   async login({ email, senha }: LoginDto) {
@@ -48,6 +80,46 @@ export class AuthService {
       });
     });
     return this.sessao(usuario);
+  }
+
+  /**
+   * Envia o link para criar uma senha nova. A resposta é sempre a mesma, exista o e-mail
+   * ou não, para ninguém usar esta tela para descobrir quem tem conta.
+   */
+  async esqueciSenha({ email }: EsqueciSenhaDto, ip: string) {
+    email = email.toLowerCase();
+    limitePorIp.registrar(ip);
+    limitePorEmail.registrar(email);
+
+    const usuario = await this.prisma.usuario.findUnique({ where: { email }, include: { empresa: true } });
+    if (usuario?.ativo && usuario.empresa.ativa) {
+      const token = randomBytes(32).toString('base64url');
+      await this.prisma.$transaction([
+        // Pedir de novo invalida os links anteriores.
+        this.prisma.recuperacaoSenha.deleteMany({ where: { usuarioId: usuario.id, usadoEm: null } }),
+        this.prisma.recuperacaoSenha.create({
+          data: { usuarioId: usuario.id, tokenHash: hashToken(token), expiraEm: new Date(Date.now() + VALIDADE_LINK_MS) },
+        }),
+      ]);
+      // Sem esperar o envio: o tempo de resposta não pode denunciar que o e-mail existe.
+      void this.email.enviar(emailRecuperacao(usuario.nome, usuario.email, `${urlDoSite()}/redefinir-senha/?token=${token}`)).catch((erro) =>
+        this.logger.error(`Falha ao enviar e-mail de recuperação para ${usuario.email}: ${erro}`),
+      );
+    }
+    return { mensagem: 'Se este e-mail estiver cadastrado, você vai receber um link para criar uma senha nova.' };
+  }
+
+  /** Troca a senha usando o link recebido por e-mail (vale uma vez, por 1 hora). */
+  async redefinirSenha({ token, senha }: RedefinirSenhaDto) {
+    const pedido = await this.prisma.recuperacaoSenha.findUnique({ where: { tokenHash: hashToken(token) } });
+    if (!pedido || pedido.usadoEm || pedido.expiraEm < new Date()) {
+      throw new BadRequestException('Este link é inválido ou expirou. Peça um novo em "Esqueci minha senha".');
+    }
+    await this.prisma.$transaction([
+      this.prisma.usuario.update({ where: { id: pedido.usuarioId }, data: { senhaHash: await bcrypt.hash(senha, 10) } }),
+      this.prisma.recuperacaoSenha.update({ where: { id: pedido.id }, data: { usadoEm: new Date() } }),
+    ]);
+    return { mensagem: 'Senha alterada. Entre com a senha nova.' };
   }
 
   async eu(usuarioId: string) {

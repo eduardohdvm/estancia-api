@@ -1,6 +1,7 @@
 'use client';
 
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { FileUp, Pencil, Plus, Trash2 } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
 import { api, qs } from '@/lib/api';
 import type { Paginado, Pessoa } from '@/lib/tipos';
@@ -85,6 +86,9 @@ export function PaginaPessoas({ papel }: { papel: 'cliente' | 'fornecedor' }) {
   return (
     <>
       <Cabecalho titulo={titulo} descricao={`Cadastro de ${titulo.toLowerCase()}`}>
+        <Link href="/importar?tipo=pessoas" className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+          <FileUp className="size-4" /> Importar
+        </Link>
         <Botao onClick={() => abrir()}>
           <Plus className="size-4" /> Novo {papel}
         </Botao>

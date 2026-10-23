@@ -12,6 +12,10 @@ async function bootstrap() {
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.setGlobalPrefix('api');
+  // Na hospedagem há um proxy na frente: o IP real do visitante vem no cabeçalho X-Forwarded-For.
+  app.set('trust proxy', 1);
+  // Importação de planilhas envia até 5.000 linhas de uma vez.
+  app.useBodyParser('json', { limit: '10mb' });
   app.enableCors({ origin: (process.env.WEB_URL ?? 'http://localhost:3000').split(',') });
   app.useGlobalPipes(
     new ValidationPipe({

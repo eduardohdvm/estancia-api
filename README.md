@@ -37,6 +37,25 @@ Ao **faturar** um pedido, o sistema baixa o estoque e gera as parcelas no contas
 
 Todos filtram por período (com atalhos como "mês passado" e "últimos 6 meses") e por origem (pedidos ou PDV), e exportam para **Excel** e **PDF**. O custo de cada item é gravado no momento do faturamento, então a margem não muda quando o preço de custo do produto é atualizado depois.
 
+### Importação de planilhas e recuperação de senha
+
+- **Importar planilhas** (Configurações → Importar planilhas, ou o botão "Importar" em Produtos e Clientes): produtos, clientes/fornecedores e estoque, a partir de Excel (.xlsx) ou CSV. Há uma planilha-modelo para baixar. O sistema confere tudo antes (mostra o que será criado, atualizado e quais linhas têm erro) e só grava depois da confirmação. Aceita variações nos nomes das colunas, números com vírgula e CSV salvo pelo Excel brasileiro (com `;` e acentos).
+- **Esqueci minha senha**: link na tela de login. Envia por e-mail um link que vale por 1 hora e só pode ser usado uma vez. A resposta é sempre a mesma (não revela quem tem conta) e há limite de tentativas.
+
+#### Envio de e-mails (SMTP)
+
+Para os e-mails saírem de verdade, configure estas variáveis (no Render: serviço → **Environment**):
+
+| Variável | Exemplo |
+|---|---|
+| `SMTP_HOST` | `smtp-relay.brevo.com` ou `smtp.gmail.com` |
+| `SMTP_PORT` | `587` |
+| `SMTP_USER` | usuário do provedor |
+| `SMTP_PASS` | senha/chave SMTP do provedor (no Gmail, uma "senha de app") |
+| `EMAIL_FROM` | `Verissimo ERP <nao-responda@seudominio.com.br>` |
+
+Sem SMTP, o sistema não envia: grava o e-mail em `apps/api/.emails/` e escreve o link no log do servidor (no Render, aba **Logs**). O administrador também pode trocar a senha de qualquer usuário em **Usuários**.
+
 Cada venda do PDV já sai faturada: baixa o estoque e lança os valores no financeiro (à vista como recebido, crediário como conta a receber em aberto). Sangria e suprimento mexem apenas no dinheiro da gaveta, não no saldo das contas.
 
 O módulo fiscal (NF-e, NFC-e, NFS-e) fica para uma fase posterior.

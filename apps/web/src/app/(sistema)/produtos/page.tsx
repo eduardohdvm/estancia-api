@@ -1,6 +1,7 @@
 'use client';
 
-import { Pencil, Plus, Tags, Trash2 } from 'lucide-react';
+import { FileUp, Pencil, Plus, Tags, Trash2 } from 'lucide-react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import { AcoesFormulario, Alerta, AreaTexto, Botao, Busca, Cabecalho, Caixa, Campo, Celula, Etiqueta, Modal, Paginacao, Selecao, Tabela } from '@/components/ui';
@@ -117,6 +118,9 @@ function PaginaProdutos() {
       <Cabecalho titulo="Produtos e serviços" descricao="Catálogo, preços e saldo em estoque">
         {podeEditar && (
           <>
+            <Link href="/importar?tipo=produtos" className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+              <FileUp className="size-4" /> Importar
+            </Link>
             <Botao variante="secundario" onClick={() => setCategoriasAberto(true)}>
               <Tags className="size-4" /> Categorias
             </Botao>

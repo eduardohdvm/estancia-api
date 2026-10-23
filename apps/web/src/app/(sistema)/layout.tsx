@@ -8,6 +8,7 @@ import {
   Building2,
   CalendarCheck,
   ClipboardList,
+  FileUp,
   KanbanSquare,
   LayoutDashboard,
   Landmark,
@@ -73,7 +74,13 @@ const menu: { grupo: string; itens: ItemMenu[] }[] = [
     ],
   },
   { grupo: 'Análises', itens: [{ href: '/relatorios', rotulo: 'Relatórios', icone: BarChart3, perfis: ['GERENTE', 'FINANCEIRO'] }] },
-  { grupo: 'Configurações', itens: [{ href: '/usuarios', rotulo: 'Usuários', icone: UserCog, perfis: [] }] },
+  {
+    grupo: 'Configurações',
+    itens: [
+      { href: '/importar', rotulo: 'Importar planilhas', icone: FileUp, perfis: ['GERENTE', 'VENDEDOR', 'FINANCEIRO', 'ESTOQUISTA'] },
+      { href: '/usuarios', rotulo: 'Usuários', icone: UserCog, perfis: [] },
+    ],
+  },
 ];
 
 export default function LayoutSistema({ children }: { children: React.ReactNode }) {

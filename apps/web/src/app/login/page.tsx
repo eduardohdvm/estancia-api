@@ -35,6 +35,9 @@ export default function Login() {
       <form onSubmit={enviar} className="flex flex-col gap-4">
         <Campo rotulo="E-mail" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
         <Campo rotulo="Senha" type="password" autoComplete="current-password" required value={senha} onChange={(e) => setSenha(e.target.value)} />
+        <Link href="/esqueci-senha" className="-mt-2 self-end text-sm text-indigo-600 hover:underline">
+          Esqueci minha senha
+        </Link>
         <Alerta>{erro}</Alerta>
         <Botao type="submit" carregando={enviando} className="w-full">
           Entrar
