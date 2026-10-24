@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { api, qs } from '@/lib/api';
 import type { Paginado, Pessoa } from '@/lib/tipos';
+import { buscarCep } from '@/lib/cep';
 import { useDados } from '@/lib/use-dados';
 import { AcoesFormulario, Alerta, AreaTexto, Botao, Busca, Cabecalho, Caixa, Campo, Celula, Etiqueta, Modal, Paginacao, Selecao, Tabela } from './ui';
 
@@ -18,8 +19,11 @@ const vazio = {
   cep: '',
   endereco: '',
   numero: '',
+  complemento: '',
   bairro: '',
   cidade: '',
+  codigoMunicipio: '',
+  inscricaoEstadual: '',
   uf: '',
   observacoes: '',
   cliente: true,
@@ -51,6 +55,11 @@ export function PaginaPessoas({ papel }: { papel: 'cliente' | 'fornecedor' }) {
         : { ...vazio, cliente: papel === 'cliente', fornecedor: papel === 'fornecedor' },
     );
     setAberto(true);
+  }
+
+  async function preencherCep() {
+    const e = await buscarCep(form.cep);
+    if (e) setForm((f) => ({ ...f, endereco: e.logradouro || f.endereco, bairro: e.bairro || f.bairro, cidade: e.cidade, uf: e.uf, codigoMunicipio: e.codigoMunicipio }));
   }
 
   async function salvar(e: React.FormEvent) {
@@ -140,12 +149,16 @@ export function PaginaPessoas({ papel }: { papel: 'cliente' | 'fornecedor' }) {
             {juridica && <Campo rotulo="Nome fantasia" className="sm:col-span-6" {...campo('nomeFantasia')} />}
             <Campo rotulo="E-mail" type="email" className="sm:col-span-3" {...campo('email')} />
             <Campo rotulo="Telefone" className="sm:col-span-3" {...campo('telefone')} />
-            <Campo rotulo="CEP" className="sm:col-span-2" {...campo('cep')} />
+            <Campo rotulo="CEP" className="sm:col-span-2" {...campo('cep')} onBlur={preencherCep} />
             <Campo rotulo="Endereço" className="sm:col-span-3" {...campo('endereco')} />
             <Campo rotulo="Número" className="sm:col-span-1" {...campo('numero')} />
+            <Campo rotulo="Complemento" className="sm:col-span-2" {...campo('complemento')} />
             <Campo rotulo="Bairro" className="sm:col-span-2" {...campo('bairro')} />
-            <Campo rotulo="Cidade" className="sm:col-span-3" {...campo('cidade')} />
+            <Campo rotulo="Cidade" className="sm:col-span-2" {...campo('cidade')} />
             <Campo rotulo="UF" maxLength={2} className="sm:col-span-1" {...campo('uf')} onChange={(e) => setForm({ ...form, uf: e.target.value.toUpperCase() })} />
+            <Campo rotulo="Código IBGE do município" className="sm:col-span-2" {...campo('codigoMunicipio')} />
+            <Campo rotulo={juridica ? 'Inscrição estadual (ou ISENTO)' : 'Inscrição estadual (produtor rural)'} className="sm:col-span-3" {...campo('inscricaoEstadual')} />
+            <p className="text-xs text-slate-500 sm:col-span-6">Para emitir NF-e: CPF/CNPJ, endereço completo e código IBGE. Digite o CEP e saia do campo para preencher o endereço sozinho.</p>
             <AreaTexto rotulo="Observações" className="sm:col-span-6" {...campo('observacoes')} />
           </div>
           <div className="mt-4 flex flex-wrap gap-5">

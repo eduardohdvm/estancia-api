@@ -11,6 +11,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { EmailModule } from './email/email.module';
 import { EstoqueModule } from './estoque/estoque.module';
 import { FinanceiroModule } from './financeiro/financeiro.module';
+import { FiscalModule } from './fiscal/fiscal.module';
 import { ImportacaoModule } from './importacao/importacao.module';
 import { PdvModule } from './pdv/pdv.module';
 import { PessoasModule } from './pessoas/pessoas.module';
@@ -44,6 +45,7 @@ import { VendasModule } from './vendas/vendas.module';
     RelatoriosModule,
     ImportacaoModule,
     EmailModule,
+    FiscalModule,
   ],
   controllers: [SaudeController],
   providers: [

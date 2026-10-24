@@ -1,6 +1,6 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { Transform } from 'class-transformer';
-import { IsBoolean, IsEmail, IsEnum, IsIn, IsOptional, IsString, Length, MinLength, ValidateIf } from 'class-validator';
+import { IsBoolean, IsEmail, IsEnum, IsIn, IsOptional, IsString, Length, Matches, MinLength, ValidateIf } from 'class-validator';
 import { PaginacaoDto } from '../common/paginacao';
 import { TipoPessoa } from '../generated/prisma/enums';
 
@@ -29,8 +29,11 @@ export class CriarPessoaDto {
   @IsOptional() @vazioParaNull() @IsString() cep?: string | null;
   @IsOptional() @vazioParaNull() @IsString() endereco?: string | null;
   @IsOptional() @vazioParaNull() @IsString() numero?: string | null;
+  @IsOptional() @vazioParaNull() @IsString() complemento?: string | null;
   @IsOptional() @vazioParaNull() @IsString() bairro?: string | null;
   @IsOptional() @vazioParaNull() @IsString() cidade?: string | null;
+  @IsOptional() @vazioParaNull() @ValidateIf((o) => o.codigoMunicipio !== null) @Matches(/^\d{7}$/, { message: 'Código do município (IBGE) deve ter 7 dígitos' }) codigoMunicipio?: string | null;
+  @IsOptional() @vazioParaNull() @IsString() inscricaoEstadual?: string | null;
 
   @IsOptional()
   @vazioParaNull()

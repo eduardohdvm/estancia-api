@@ -16,6 +16,10 @@ const incluir = {
     select: { id: true, parcela: true, totalParcelas: true, valor: true, vencimento: true, status: true },
     orderBy: { parcela: 'asc' },
   },
+  notas: {
+    select: { id: true, modelo: true, serie: true, numero: true, status: true, chave: true, ambiente: true, motivo: true, codigoStatus: true },
+    orderBy: { createdAt: 'desc' },
+  },
 } satisfies Prisma.PedidoVendaInclude;
 
 @Injectable()
@@ -159,6 +163,7 @@ export class VendasService {
     });
     if (pedido.status === 'CANCELADO') throw new BadRequestException('Este pedido já está cancelado');
     if (pedido.origem === 'PDV') throw new BadRequestException('Vendas do PDV são canceladas pela frente de caixa');
+    await exigirSemNotaAutorizada(this.prisma, id);
     if (pedido.lancamentos.some((l) => l.status === 'PAGO')) {
       throw new BadRequestException('Há parcelas já recebidas. Estorne os recebimentos antes de cancelar');
     }
@@ -233,4 +238,12 @@ export class VendasService {
 export async function proximoNumeroPedido(tx: Tx, empresaId: string) {
   const ultimo = await tx.pedidoVenda.aggregate({ where: { empresaId }, _max: { numero: true } });
   return (ultimo._max.numero ?? 0) + 1;
+}
+
+/** Venda com NF-e/NFC-e autorizada só pode ser cancelada depois de cancelar a nota na SEFAZ. */
+export async function exigirSemNotaAutorizada(prisma: PrismaService, pedidoId: string) {
+  const nota = await prisma.notaFiscal.findFirst({ where: { pedidoId, status: 'AUTORIZADA' } });
+  if (nota) {
+    throw new BadRequestException(`Cancele antes a ${nota.modelo === 'NFCE' ? 'NFC-e' : 'NF-e'} nº ${nota.numero} desta venda (em Notas fiscais)`);
+  }
 }

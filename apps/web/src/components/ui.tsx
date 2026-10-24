@@ -231,6 +231,13 @@ const statusInfo: Record<string, [string, keyof typeof tons]> = {
   ENVIADO: ['Aguardando entrega', 'azul'],
   RECEBIDO: ['Recebido', 'verde'],
   FECHADO: ['Fechado', 'cinza'],
+  AUTORIZADA: ['Autorizada', 'verde'],
+  REJEITADA: ['Rejeitada', 'vermelho'],
+  CANCELADA: ['Cancelada', 'cinza'],
+  DENEGADA: ['Denegada', 'vermelho'],
+  SIMULACAO: ['Simulação', 'roxo'],
+  HOMOLOGACAO: ['Homologação', 'amarelo'],
+  PRODUCAO: ['Produção', 'verde'],
 };
 
 export function Status({ valor }: { valor: string }) {

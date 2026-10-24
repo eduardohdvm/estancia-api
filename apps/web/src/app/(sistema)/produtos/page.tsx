@@ -10,6 +10,7 @@ import { moeda, numero } from '@/lib/formato';
 import { useSessao } from '@/lib/sessao';
 import type { Categoria, Paginado, Produto } from '@/lib/tipos';
 import { useDados } from '@/lib/use-dados';
+import { CSOSN, ORIGENS } from '@/lib/fiscal';
 
 const vazio = {
   codigo: '',
@@ -22,6 +23,11 @@ const vazio = {
   precoVenda: '0',
   estoqueMinimo: '0',
   servico: false,
+  ncm: '',
+  cest: '',
+  cfop: '',
+  csosn: '',
+  origem: '0',
   ativo: true,
 };
 
@@ -70,6 +76,11 @@ function PaginaProdutos() {
             precoVenda: String(Number(produto.precoVenda)),
             estoqueMinimo: String(Number(produto.estoqueMinimo)),
             servico: produto.servico,
+            ncm: produto.ncm ?? '',
+            cest: produto.cest ?? '',
+            cfop: produto.cfop ?? '',
+            csosn: produto.csosn ?? '',
+            origem: String(produto.origem ?? 0),
             ativo: produto.ativo,
           }
         : { ...vazio, codigo: String((dados?.total ?? 0) + 1).padStart(3, '0') },
@@ -85,6 +96,7 @@ function PaginaProdutos() {
       precoCusto: Number(form.precoCusto),
       precoVenda: Number(form.precoVenda),
       estoqueMinimo: Number(form.estoqueMinimo),
+      origem: Number(form.origem),
     };
     try {
       await api(editando ? `/produtos/${editando}` : '/produtos', { metodo: editando ? 'PATCH' : 'POST', corpo });
@@ -205,6 +217,29 @@ function PaginaProdutos() {
             </div>
             {!form.servico && <Campo rotulo="Estoque mínimo" type="number" step="0.001" min="0" className="sm:col-span-2" {...campo('estoqueMinimo')} />}
             <AreaTexto rotulo="Descrição" className="sm:col-span-6" {...campo('descricao')} />
+            {!form.servico && (
+              <>
+                <p className="border-t border-slate-200 pt-3 text-sm font-semibold text-slate-900 sm:col-span-6">Dados fiscais (NF-e / NFC-e)</p>
+                <Campo rotulo="NCM" placeholder="8 dígitos" className="sm:col-span-2" {...campo('ncm')} />
+                <Campo rotulo="CEST (se houver ST)" className="sm:col-span-2" {...campo('cest')} />
+                <Campo rotulo="CFOP (vazio = padrão)" placeholder="ex.: 5102" className="sm:col-span-2" {...campo('cfop')} />
+                <Selecao rotulo="CSOSN" className="sm:col-span-3" {...campo('csosn')}>
+                  <option value="">Padrão da configuração fiscal</option>
+                  {CSOSN.map(([v, t]) => (
+                    <option key={v} value={v}>
+                      {t}
+                    </option>
+                  ))}
+                </Selecao>
+                <Selecao rotulo="Origem" className="sm:col-span-3" {...campo('origem')}>
+                  {ORIGENS.map(([v, t]) => (
+                    <option key={v} value={v}>
+                      {t}
+                    </option>
+                  ))}
+                </Selecao>
+              </>
+            )}
           </div>
           <div className="mt-4 flex flex-wrap gap-5">
             <Caixa rotulo="É um serviço (não controla estoque)" checked={form.servico} onChange={(e) => setForm({ ...form, servico: e.target.checked })} />

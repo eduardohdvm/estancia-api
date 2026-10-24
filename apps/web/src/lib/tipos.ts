@@ -29,9 +29,12 @@ export interface Pessoa {
   cep: string | null;
   endereco: string | null;
   numero: string | null;
+  complemento: string | null;
   bairro: string | null;
   cidade: string | null;
+  codigoMunicipio: string | null;
   uf: string | null;
+  inscricaoEstadual: string | null;
   observacoes: string | null;
   cliente: boolean;
   fornecedor: boolean;
@@ -64,6 +67,11 @@ export interface Produto {
   ativo: boolean;
   categoriaId: string | null;
   categoria: { id: string; nome: string } | null;
+  ncm: string | null;
+  cest: string | null;
+  cfop: string | null;
+  csosn: string | null;
+  origem: number;
   estoques: { quantidade: string; deposito: { id: string; nome: string } }[];
   saldo: number;
   estoqueBaixo: boolean;
@@ -100,6 +108,7 @@ export interface PedidoResumo {
 
 export interface Pedido extends PedidoResumo {
   cliente: { id: string; nome: string; documento: string | null };
+  origem: 'PEDIDO' | 'PDV';
   clienteId: string;
   depositoId: string;
   subtotal: string;
@@ -120,6 +129,7 @@ export interface Pedido extends PedidoResumo {
     produto: { id: string; codigo: string; unidade: string; servico: boolean };
   }[];
   lancamentos: { id: string; parcela: number; totalParcelas: number; valor: string; vencimento: string; status: StatusLancamento }[];
+  notas: { id: string; modelo: ModeloNota; serie: number; numero: number; status: StatusNota; chave: string; ambiente: AmbienteFiscal; motivo: string | null; codigoStatus: number | null }[];
 }
 
 export type TipoLancamento = 'PAGAR' | 'RECEBER';
@@ -201,6 +211,7 @@ export interface CaixaDetalhado extends Caixa {
     createdAt: string;
     cliente: { id: string; nome: string };
     pagamentos: { forma: FormaPagamento; valor: string; troco: string }[];
+    notas?: { id: string; numero: number; status: StatusNota }[];
   }[];
   resumo: {
     quantidadeVendas: number;
@@ -301,4 +312,68 @@ export interface Atividade {
   usuario: { id: string; nome: string };
   pessoa: { id: string; nome: string } | null;
   oportunidade: { id: string; titulo: string } | null;
+}
+
+// ─────────── Fiscal ───────────
+
+export type AmbienteFiscal = 'SIMULACAO' | 'HOMOLOGACAO' | 'PRODUCAO';
+export type ModeloNota = 'NFE' | 'NFCE';
+export type StatusNota = 'AUTORIZADA' | 'REJEITADA' | 'CANCELADA' | 'DENEGADA';
+
+export interface ConfiguracaoFiscal {
+  razaoSocial: string;
+  nomeFantasia: string | null;
+  cnpj: string;
+  inscricaoEstadual: string;
+  inscricaoMunicipal: string | null;
+  cnae: string | null;
+  crt: number;
+  logradouro: string;
+  numero: string;
+  complemento: string | null;
+  bairro: string;
+  codigoMunicipio: string;
+  municipio: string;
+  uf: string;
+  cep: string;
+  telefone: string | null;
+  ambiente: AmbienteFiscal;
+  serieNfe: number;
+  proximoNumeroNfe: number;
+  serieNfce: number;
+  proximoNumeroNfce: number;
+  cfopPadrao: string;
+  csosnPadrao: string;
+  informacoesAdicionais: string | null;
+  emitirNfceNoPdv: boolean;
+  cscId: string | null;
+  cscConfigurado: boolean;
+  certificado: { titular: string; validade: string; diasRestantes: number } | null;
+  transmissaoDisponivel: { nfe: boolean; nfce: boolean };
+  responsavelTecnicoConfigurado: boolean;
+}
+
+export interface NotaFiscal {
+  id: string;
+  modelo: ModeloNota;
+  serie: number;
+  numero: number;
+  chave: string;
+  ambiente: AmbienteFiscal;
+  status: StatusNota;
+  destinatarioNome: string | null;
+  destinatarioDocumento: string | null;
+  valorTotal: string;
+  protocolo: string | null;
+  codigoStatus: number | null;
+  motivo: string | null;
+  qrCode: string | null;
+  urlConsulta: string | null;
+  autorizadaEm: string | null;
+  canceladaEm: string | null;
+  justificativaCancelamento: string | null;
+  createdAt: string;
+  temXmlAutorizado: boolean;
+  pedido: { id: string; numero: number; origem: 'PEDIDO' | 'PDV' } | null;
+  xml?: string;
 }

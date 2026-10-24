@@ -58,21 +58,21 @@ const PRODUTOS = [
 ] as const;
 
 const CLIENTES = [
-  { nome: 'Ana Paula Ferreira', documento: '333.333.333-33', telefone: '(11) 98888-1001', cidade: 'São Paulo', uf: 'SP' },
-  { nome: 'Carlos Eduardo Lima', documento: '444.444.444-44', telefone: '(11) 98888-1002', cidade: 'Guarulhos', uf: 'SP' },
-  { nome: 'Fernanda Costa', documento: '555.555.555-55', telefone: '(11) 98888-1003', email: 'fernanda@email.com', cidade: 'São Paulo', uf: 'SP' },
-  { nome: 'Juliana Mendes', documento: '666.666.666-66', telefone: '(19) 98888-1004', cidade: 'Campinas', uf: 'SP' },
-  { nome: 'Roberto Alves', documento: '777.777.777-77', telefone: '(11) 98888-1005', cidade: 'Osasco', uf: 'SP' },
-  { tipo: 'JURIDICA' as const, nome: 'Restaurante Sabor Caseiro Ltda', nomeFantasia: 'Sabor Caseiro', documento: '33.333.333/0001-33', telefone: '(11) 3333-2001', email: 'compras@saborcaseiro.com.br', cidade: 'São Paulo', uf: 'SP' },
-  { tipo: 'JURIDICA' as const, nome: 'Padaria Pão Quente ME', nomeFantasia: 'Pão Quente', documento: '44.444.444/0001-44', telefone: '(11) 3333-2002', cidade: 'São Paulo', uf: 'SP' },
-  { tipo: 'JURIDICA' as const, nome: 'Lanchonete do Zé Ltda', nomeFantasia: 'Lanchonete do Zé', documento: '55.555.555/0001-55', telefone: '(11) 3333-2003', cidade: 'Santo André', uf: 'SP' },
-  { tipo: 'JURIDICA' as const, nome: 'Mercadinho São Jorge Ltda', nomeFantasia: 'São Jorge', documento: '66.666.666/0001-66', telefone: '(11) 3333-2004', cidade: 'São Bernardo do Campo', uf: 'SP' },
+  { nome: 'Ana Paula Ferreira', documento: '153.509.460-56', telefone: '(11) 98888-1001', cidade: 'São Paulo', uf: 'SP' },
+  { nome: 'Carlos Eduardo Lima', documento: '346.273.770-88', telefone: '(11) 98888-1002', cidade: 'Guarulhos', uf: 'SP' },
+  { nome: 'Fernanda Costa', documento: '718.640.230-58', telefone: '(11) 98888-1003', email: 'fernanda@email.com', cidade: 'São Paulo', uf: 'SP' },
+  { nome: 'Juliana Mendes', documento: '250.197.710-66', telefone: '(19) 98888-1004', cidade: 'Campinas', uf: 'SP' },
+  { nome: 'Roberto Alves', documento: '483.104.920-49', telefone: '(11) 98888-1005', cidade: 'Osasco', uf: 'SP' },
+  { tipo: 'JURIDICA' as const, nome: 'Restaurante Sabor Caseiro Ltda', nomeFantasia: 'Sabor Caseiro', documento: '45.423.710/0001-62', telefone: '(11) 3333-2001', email: 'compras@saborcaseiro.com.br', cidade: 'São Paulo', uf: 'SP' },
+  { tipo: 'JURIDICA' as const, nome: 'Padaria Pão Quente ME', nomeFantasia: 'Pão Quente', documento: '07.836.442/0001-11', telefone: '(11) 3333-2002', cidade: 'São Paulo', uf: 'SP' },
+  { tipo: 'JURIDICA' as const, nome: 'Lanchonete do Zé Ltda', nomeFantasia: 'Lanchonete do Zé', documento: '27.638.150/0001-81', telefone: '(11) 3333-2003', cidade: 'Santo André', uf: 'SP' },
+  { tipo: 'JURIDICA' as const, nome: 'Mercadinho São Jorge Ltda', nomeFantasia: 'São Jorge', documento: '36.125.897/0001-27', telefone: '(11) 3333-2004', cidade: 'São Bernardo do Campo', uf: 'SP' },
 ];
 
 const FORNECEDORES = [
-  { nome: 'Atacadão Central Ltda', documento: '77.777.777/0001-77', telefone: '(11) 4004-3001', email: 'vendas@atacadaocentral.com.br', cidade: 'São Paulo', uf: 'SP', categorias: ['Mercearia'] },
-  { nome: 'Bebidas Rio Distribuidora Ltda', documento: '88.888.888/0001-88', telefone: '(21) 4004-3002', email: 'pedidos@bebidasrio.com.br', cidade: 'Rio de Janeiro', uf: 'RJ', categorias: ['Bebidas'] },
-  { nome: 'Limpa Bem Distribuidora Ltda', documento: '99.999.999/0001-99', telefone: '(11) 4004-3003', cidade: 'Barueri', uf: 'SP', categorias: ['Limpeza', 'Higiene'] },
+  { nome: 'Atacadão Central Ltda', documento: '02.948.573/0001-77', telefone: '(11) 4004-3001', email: 'vendas@atacadaocentral.com.br', cidade: 'São Paulo', uf: 'SP', categorias: ['Mercearia'] },
+  { nome: 'Bebidas Rio Distribuidora Ltda', documento: '51.637.482/0001-26', telefone: '(21) 4004-3002', email: 'pedidos@bebidasrio.com.br', cidade: 'Rio de Janeiro', uf: 'RJ', categorias: ['Bebidas'] },
+  { nome: 'Limpa Bem Distribuidora Ltda', documento: '18.402.965/0001-76', telefone: '(11) 4004-3003', cidade: 'Barueri', uf: 'SP', categorias: ['Limpeza', 'Higiene'] },
 ];
 
 export async function popularExemplos(tx: Tx, empresaId: string) {

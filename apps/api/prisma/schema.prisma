@@ -55,6 +55,8 @@ model Empresa {
   pedidosCompra         PedidoCompra[]
   oportunidades         Oportunidade[]
   atividades            Atividade[]
+  configuracaoFiscal    ConfiguracaoFiscal?
+  notasFiscais          NotaFiscal[]
 }
 
 model Usuario {
@@ -101,26 +103,29 @@ enum TipoPessoa {
 
 // Cliente e fornecedor ficam na mesma tabela: a mesma pessoa pode ser os dois.
 model Pessoa {
-  id           String     @id @default(uuid())
-  empresaId    String
-  tipo         TipoPessoa @default(FISICA)
-  nome         String
-  nomeFantasia String?
-  documento    String? // CPF ou CNPJ
-  email        String?
-  telefone     String?
-  cep          String?
-  endereco     String?
-  numero       String?
-  bairro       String?
-  cidade       String?
-  uf           String?
-  observacoes  String?
-  cliente      Boolean    @default(true)
-  fornecedor   Boolean    @default(false)
-  ativo        Boolean    @default(true)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id                String     @id @default(uuid())
+  empresaId         String
+  tipo              TipoPessoa @default(FISICA)
+  nome              String
+  nomeFantasia      String?
+  documento         String? // CPF ou CNPJ
+  email             String?
+  telefone          String?
+  cep               String?
+  endereco          String?
+  numero            String?
+  complemento       String?
+  bairro            String?
+  cidade            String?
+  codigoMunicipio   String? // código IBGE (7 dígitos), exigido na NF-e
+  uf                String?
+  inscricaoEstadual String? // vazio = não contribuinte; "ISENTO" = contribuinte isento
+  observacoes       String?
+  cliente           Boolean    @default(true)
+  fornecedor        Boolean    @default(false)
+  ativo             Boolean    @default(true)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
 
   empresa       Empresa        @relation(fields: [empresaId], references: [id])
   pedidos       PedidoVenda[]
@@ -159,6 +164,12 @@ model Produto {
   estoqueMinimo Decimal  @default(0) @db.Decimal(14, 3)
   servico       Boolean  @default(false) // serviço não movimenta estoque
   ativo         Boolean  @default(true)
+  // Dados fiscais (NF-e/NFC-e). Sem CFOP/CSOSN, valem os padrões da configuração fiscal.
+  ncm           String?
+  cest          String?
+  cfop          String?
+  csosn         String?
+  origem        Int      @default(0) // 0 = nacional
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -283,6 +294,7 @@ model PedidoVenda {
   movimentos  MovimentoEstoque[]
   lancamentos Lancamento[]
   pagamentos  PagamentoVenda[]
+  notas       NotaFiscal[]
 
   @@unique([empresaId, numero])
   @@index([empresaId, status])
@@ -574,4 +586,101 @@ model Lancamento {
   pedidoCompra  PedidoCompra?        @relation(fields: [pedidoCompraId], references: [id])
 
   @@index([empresaId, tipo, status, vencimento])
+}
+
+// ───────────────────────────── Fiscal (NF-e / NFC-e) ─────────────────────────────
+
+enum AmbienteFiscal {
+  SIMULACAO // gera e assina o XML, mas não envia à SEFAZ (para testes e demonstração)
+  HOMOLOGACAO // envia à SEFAZ de teste: sem valor fiscal
+  PRODUCAO // notas com valor fiscal
+}
+
+model ConfiguracaoFiscal {
+  id                    String         @id @default(uuid())
+  empresaId             String         @unique
+  razaoSocial           String
+  nomeFantasia          String?
+  cnpj                  String // só dígitos
+  inscricaoEstadual     String
+  inscricaoMunicipal    String?
+  cnae                  String?
+  crt                   Int            @default(1) // 1 = Simples Nacional, 2 = Simples (excesso), 3 = Regime normal, 4 = MEI
+  logradouro            String
+  numero                String
+  complemento           String?
+  bairro                String
+  codigoMunicipio       String // IBGE, 7 dígitos
+  municipio             String
+  uf                    String
+  cep                   String
+  telefone              String?
+  ambiente              AmbienteFiscal @default(SIMULACAO)
+  serieNfe              Int            @default(1)
+  proximoNumeroNfe      Int            @default(1)
+  serieNfce             Int            @default(1)
+  proximoNumeroNfce     Int            @default(1)
+  cfopPadrao            String         @default("5102")
+  csosnPadrao           String         @default("102")
+  informacoesAdicionais String?
+  emitirNfceNoPdv       Boolean        @default(false)
+  // CSC (código de segurança do contribuinte) da NFC-e, gerado no site da SEFAZ.
+  cscId                 String?
+  cscToken              String? // criptografado
+  // Certificado digital A1 (.pfx) e senha, criptografados.
+  certificado           String?
+  certificadoSenha      String?
+  certificadoTitular    String?
+  certificadoValidade   DateTime?
+  updatedAt             DateTime       @updatedAt
+
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+}
+
+enum ModeloNota {
+  NFE // modelo 55: venda entre empresas, DANFE em A4
+  NFCE // modelo 65: venda ao consumidor no balcão, cupom com QR Code
+}
+
+enum StatusNota {
+  AUTORIZADA
+  REJEITADA
+  CANCELADA
+  DENEGADA
+}
+
+model NotaFiscal {
+  id                        String         @id @default(uuid())
+  empresaId                 String
+  modelo                    ModeloNota
+  serie                     Int
+  numero                    Int
+  chave                     String         @unique
+  ambiente                  AmbienteFiscal
+  status                    StatusNota
+  pedidoId                  String?
+  destinatarioNome          String?
+  destinatarioDocumento     String?
+  valorTotal                Decimal        @db.Decimal(14, 2)
+  xml                       String // XML assinado que foi enviado
+  xmlAutorizado             String? // nfeProc: XML + protocolo de autorização
+  protocolo                 String?
+  codigoStatus              Int? // cStat da SEFAZ (100 = autorizada)
+  motivo                    String? // xMotivo da SEFAZ
+  qrCode                    String? // NFC-e
+  urlConsulta               String? // NFC-e
+  autorizadaEm              DateTime?
+  canceladaEm               DateTime?
+  protocoloCancelamento     String?
+  justificativaCancelamento String?
+  xmlCancelamento           String?
+  createdAt                 DateTime       @default(now())
+  updatedAt                 DateTime       @updatedAt
+
+  empresa Empresa      @relation(fields: [empresaId], references: [id])
+  pedido  PedidoVenda? @relation(fields: [pedidoId], references: [id])
+
+  @@unique([empresaId, modelo, serie, numero])
+  @@index([empresaId, createdAt])
+  @@index([pedidoId])
 }

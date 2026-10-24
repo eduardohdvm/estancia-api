@@ -56,6 +56,28 @@ Para os e-mails saírem de verdade, configure estas variáveis (no Render: servi
 
 Sem SMTP, o sistema não envia: grava o e-mail em `apps/api/.emails/` e escreve o link no log do servidor (no Render, aba **Logs**). O administrador também pode trocar a senha de qualquer usuário em **Usuários**.
 
+### Fiscal: NF-e e NFC-e (emissão própria, direto na SEFAZ)
+
+O sistema monta, assina e envia as notas sem serviço intermediário pago:
+
+- **NF-e (modelo 55)** a partir de um pedido faturado e **NFC-e (modelo 65)** automática em cada venda do PDV (com "CPF na nota"), layout 4.00, para empresas do **Simples Nacional** e **MEI** (ICMS por CSOSN).
+- Assinatura digital com o **certificado A1** da empresa (enviado em Configuração fiscal e guardado criptografado), QR Code da NFC-e com o CSC, chave de acesso, numeração por série, cancelamento (evento 110111).
+- **DANFE** para imprimir: cupom de 80 mm (NFC-e) e folha A4 com código de barras (NF-e), montados a partir do XML autorizado. Download do XML.
+- Venda interestadual troca o CFOP para 6xxx; venda com nota autorizada só é cancelada depois de cancelar a nota; CPF/CNPJ conferidos antes do envio.
+- Três ambientes: **Simulação** (gera e assina, não envia: para testar e demonstrar), **Homologação** (SEFAZ de teste) e **Produção**.
+
+**Ainda falta para emitir de verdade:** cadastrar os endereços da SEFAZ do estado em [`apps/api/src/fiscal/sefaz/enderecos.ts`](apps/api/src/fiscal/sefaz/enderecos.ts) e testar em homologação com um certificado A1 real. Fora do escopo por enquanto: regime normal (ICMS/IPI destacados), substituição tributária calculada, IBS/CBS da reforma tributária (não exigidos do Simples em 2026), contingência offline, inutilização, carta de correção e NFS-e.
+
+Variáveis do servidor para o fiscal:
+
+| Variável | Para quê |
+|---|---|
+| `FISCAL_CHAVE` | Criptografa certificado, senha e CSC no banco (o `render.yaml` gera sozinho). Não troque depois de enviar certificados. |
+| `RESP_TEC_CNPJ`, `RESP_TEC_CONTATO`, `RESP_TEC_EMAIL`, `RESP_TEC_FONE` | Responsável técnico (a sua software house), exigido por alguns estados no XML. |
+| `SEFAZ_VERIFICAR_TLS` | `false` só se a conexão falhar por causa do certificado do servidor da SEFAZ (ICP-Brasil). |
+
+Testes das partes que não dependem da SEFAZ (chave, XML, assinatura, QR Code, cliente SOAP contra um servidor simulado): `npm run test:fiscal -w apps/api`.
+
 Cada venda do PDV já sai faturada: baixa o estoque e lança os valores no financeiro (à vista como recebido, crediário como conta a receber em aberto). Sangria e suprimento mexem apenas no dinheiro da gaveta, não no saldo das contas.
 
 O módulo fiscal (NF-e, NFC-e, NFS-e) fica para uma fase posterior.

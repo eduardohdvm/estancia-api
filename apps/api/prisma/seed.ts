@@ -45,10 +45,10 @@ async function criarEmpresaDemo() {
 
     await tx.pessoa.createMany({
       data: [
-        { empresaId, nome: 'Maria Oliveira', documento: '111.111.111-11', email: 'maria@email.com', telefone: '(11) 99999-0001', cidade: 'São Paulo', uf: 'SP' },
-        { empresaId, nome: 'João Santos', documento: '222.222.222-22', telefone: '(21) 99999-0002', cidade: 'Rio de Janeiro', uf: 'RJ' },
-        { empresaId, tipo: 'JURIDICA', nome: 'Mercado Bom Preço Ltda', nomeFantasia: 'Bom Preço', documento: '11.111.111/0001-11', cidade: 'Campinas', uf: 'SP' },
-        { empresaId, tipo: 'JURIDICA', nome: 'Distribuidora Alfa S.A.', documento: '22.222.222/0001-22', cliente: false, fornecedor: true, cidade: 'Curitiba', uf: 'PR' },
+        { empresaId, nome: 'Maria Oliveira', documento: '529.982.247-25', email: 'maria@email.com', telefone: '(11) 99999-0001', cidade: 'São Paulo', uf: 'SP' },
+        { empresaId, nome: 'João Santos', documento: '390.533.447-05', telefone: '(21) 99999-0002', cidade: 'Rio de Janeiro', uf: 'RJ' },
+        { empresaId, tipo: 'JURIDICA', nome: 'Mercado Bom Preço Ltda', nomeFantasia: 'Bom Preço', documento: '11.222.333/0001-81', cidade: 'Campinas', uf: 'SP' },
+        { empresaId, tipo: 'JURIDICA', nome: 'Distribuidora Alfa S.A.', documento: '11.444.777/0001-61', cliente: false, fornecedor: true, cidade: 'Curitiba', uf: 'PR' },
       ],
     });
 

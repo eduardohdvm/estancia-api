@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowDownToLine, ArrowUpFromLine, Banknote, CheckCircle2, ListOrdered, Loader2, Lock, Minus, Plus, ScanBarcode, Trash2 } from 'lucide-react';
+import { ArrowDownToLine, ArrowUpFromLine, Banknote, CheckCircle2, ListOrdered, Loader2, Lock, Minus, Plus, Printer, ScanBarcode, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ResumoCaixa } from '@/components/resumo-caixa';
 import { AcoesFormulario, Alerta, AreaTexto, Botao, Campo, Cartao, Celula, Modal, Selecao, Status, Tabela } from '@/components/ui';
@@ -21,6 +21,14 @@ interface ItemCarrinho {
 }
 
 const centavos = (v: number) => Math.round(v * 100) / 100;
+
+type VendaConcluida = {
+  numero: number;
+  total: number;
+  troco: number;
+  nota: { id: string; numero: number; status: string; motivo: string | null } | null;
+  erroFiscal: string | null;
+};
 
 export default function PaginaPdv() {
   const { dados: caixa, carregando, recarregar } = useDados<CaixaDetalhado | null>('/pdv/caixa');
@@ -86,7 +94,7 @@ function TelaVenda({ caixa, recarregar }: { caixa: CaixaDetalhado; recarregar: (
   const [aviso, setAviso] = useState('');
   const [modal, setModal] = useState<'pagamento' | 'movimento' | 'vendas' | 'fechar' | null>(null);
   const [tipoMovimento, setTipoMovimento] = useState<'SUPRIMENTO' | 'SANGRIA'>('SANGRIA');
-  const [concluida, setConcluida] = useState<{ numero: number; total: number; troco: number } | null>(null);
+  const [concluida, setConcluida] = useState<VendaConcluida | null>(null);
   const buscaRef = useRef<HTMLInputElement>(null);
 
   const subtotal = centavos(itens.reduce((s, i) => s + i.quantidade * i.precoUnitario, 0));
@@ -324,14 +332,15 @@ function TelaVenda({ caixa, recarregar }: { caixa: CaixaDetalhado; recarregar: (
           total={total}
           temCliente={!!clienteId}
           aoFechar={() => (setModal(null), focarBusca())}
-          aoConfirmar={async (pagamentos) => {
-            const r = await api<{ numero: number; total: number; troco: number }>('/pdv/vendas', {
+          aoConfirmar={async (pagamentos, documentoNota) => {
+            const r = await api<VendaConcluida>('/pdv/vendas', {
               metodo: 'POST',
               corpo: {
                 clienteId: clienteId || undefined,
                 desconto: Number(desconto || 0),
                 itens: itens.map((i) => ({ produtoId: i.produtoId, quantidade: i.quantidade, precoUnitario: i.precoUnitario })),
                 pagamentos,
+                documentoNota: documentoNota || undefined,
               },
             });
             setModal(null);
@@ -361,9 +370,10 @@ function ModalPagamento({
   total: number;
   temCliente: boolean;
   aoFechar: () => void;
-  aoConfirmar: (pagamentos: { forma: FormaPagamento; valor: number }[]) => Promise<void>;
+  aoConfirmar: (pagamentos: { forma: FormaPagamento; valor: number }[], documentoNota: string) => Promise<void>;
 }) {
   const [pagamentos, setPagamentos] = useState<{ forma: FormaPagamento; valor: number }[]>([]);
+  const [documentoNota, setDocumentoNota] = useState('');
   const pago = centavos(pagamentos.reduce((s, p) => s + p.valor, 0));
   const restante = centavos(Math.max(0, total - pago));
   const troco = centavos(Math.max(0, pago - total));
@@ -394,7 +404,7 @@ function ModalPagamento({
   async function confirmar() {
     setEnviando(true);
     try {
-      await aoConfirmar(pagamentos);
+      await aoConfirmar(pagamentos, documentoNota.replace(/\D/g, ''));
     } catch (e) {
       setErro((e as Error).message);
       setEnviando(false);
@@ -456,6 +466,15 @@ function ModalPagamento({
         </ul>
       )}
 
+      <Campo
+        rotulo="CPF/CNPJ na nota (opcional)"
+        inputMode="numeric"
+        placeholder="Só se o cliente pedir"
+        className="mt-4"
+        value={documentoNota}
+        onChange={(e) => setDocumentoNota(e.target.value)}
+      />
+
       <div className="mt-4">
         <Alerta>{erro}</Alerta>
       </div>
@@ -480,7 +499,7 @@ function Resumo({ rotulo, valor, destaque = 'text-slate-900' }: { rotulo: string
   );
 }
 
-function ModalConcluida({ venda, aoContinuar }: { venda: { numero: number; total: number; troco: number }; aoContinuar: () => void }) {
+function ModalConcluida({ venda, aoContinuar }: { venda: VendaConcluida; aoContinuar: () => void }) {
   return (
     <Modal titulo="Venda concluída" aberto aoFechar={aoContinuar} largura="max-w-sm">
       <div className="text-center">
@@ -491,6 +510,20 @@ function ModalConcluida({ venda, aoContinuar }: { venda: { numero: number; total
             <p className="text-sm text-emerald-700">Troco</p>
             <p className="text-3xl font-semibold tabular-nums text-emerald-700">{moeda(venda.troco)}</p>
           </div>
+        )}
+        {venda.nota?.status === 'AUTORIZADA' && (
+          <a
+            href={`/danfe/?id=${venda.nota.id}`}
+            target="_blank"
+            className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            <Printer className="size-4" /> Imprimir cupom (NFC-e nº {venda.nota.numero})
+          </a>
+        )}
+        {venda.erroFiscal && (
+          <p className="mt-4 rounded-lg bg-amber-50 p-3 text-left text-xs text-amber-900">
+            A venda foi registrada, mas a NFC-e não foi emitida: {venda.erroFiscal}. Emita depois em "Vendas do caixa".
+          </p>
         )}
         <Botao className="mt-6 w-full" onClick={aoContinuar} autoFocus>
           Nova venda
@@ -547,10 +580,21 @@ function ModalVendas({ caixa, aoFechar, aoMudar }: { caixa: CaixaDetalhado; aoFe
     }
   }
 
+  async function emitirNfce(id: string) {
+    setErro('');
+    try {
+      const nota = await api<{ status: string; codigoStatus: number | null; motivo: string | null }>(`/fiscal/pedidos/${id}/nfce`, { metodo: 'POST', corpo: {} });
+      if (nota.status !== 'AUTORIZADA') setErro(`NFC-e recusada: ${nota.codigoStatus ?? ''} ${nota.motivo ?? ''}`);
+      await aoMudar();
+    } catch (e) {
+      setErro((e as Error).message);
+    }
+  }
+
   return (
-    <Modal titulo={`Vendas do caixa nº ${caixa.numero}`} aberto aoFechar={aoFechar} largura="max-w-3xl">
+    <Modal titulo={`Vendas do caixa nº ${caixa.numero}`} aberto aoFechar={aoFechar} largura="max-w-4xl">
       <Alerta>{erro}</Alerta>
-      <Tabela cabecalhos={['Nº', 'Hora', 'Cliente', 'Pagamento', 'Total', 'Status', '']} vazio={caixa.vendas.length === 0}>
+      <Tabela cabecalhos={['Nº', 'Hora', 'Cliente', 'Pagamento', 'Total', 'Status', 'NFC-e', '']} vazio={caixa.vendas.length === 0}>
         {caixa.vendas.map((v) => (
           <tr key={v.id}>
             <Celula className="font-medium">#{v.numero}</Celula>
@@ -560,6 +604,24 @@ function ModalVendas({ caixa, aoFechar, aoMudar }: { caixa: CaixaDetalhado; aoFe
             <Celula className="tabular-nums">{moeda(v.total)}</Celula>
             <Celula>
               <Status valor={v.status} />
+            </Celula>
+            <Celula>
+              {(() => {
+                const nota = v.notas?.find((n) => n.status === 'AUTORIZADA');
+                if (nota)
+                  return (
+                    <a href={`/danfe/?id=${nota.id}`} target="_blank" className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:underline">
+                      <Printer className="size-3.5" /> nº {nota.numero}
+                    </a>
+                  );
+                if (v.status === 'FATURADO')
+                  return (
+                    <Botao variante="fantasma" onClick={() => emitirNfce(v.id)}>
+                      Emitir
+                    </Botao>
+                  );
+                return '—';
+              })()}
             </Celula>
             <Celula className="text-right">
               {v.status !== 'CANCELADO' && (

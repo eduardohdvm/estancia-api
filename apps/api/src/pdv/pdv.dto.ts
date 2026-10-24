@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { ArrayMinSize, IsArray, IsEnum, IsNumber, IsOptional, IsString, IsUUID, Min, ValidateNested } from 'class-validator';
+import { ArrayMinSize, IsArray, IsEnum, IsNumber, IsOptional, IsString, IsUUID, Matches, Min, ValidateNested } from 'class-validator';
 import { PaginacaoDto } from '../common/paginacao';
 import { FormaPagamento, StatusCaixa, TipoMovimentoCaixa } from '../generated/prisma/enums';
 import { ItemPedidoDto } from '../vendas/vendas.dto';
@@ -55,6 +55,11 @@ export class VendaPdvDto {
   @IsNumber()
   @Min(0)
   desconto?: number;
+
+  /** CPF/CNPJ do consumidor para sair na NFC-e ("CPF na nota"). */
+  @IsOptional()
+  @Matches(/^(\d{11}|\d{14})$/, { message: 'CPF/CNPJ na nota deve ter 11 ou 14 dígitos' })
+  documentoNota?: string;
 
   @IsArray()
   @ArrayMinSize(1, { message: 'Informe a forma de pagamento' })

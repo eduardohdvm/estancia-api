@@ -3,9 +3,10 @@ import { centavos, hoje, somarDias } from '../common/datas';
 import { paginar, resultado } from '../common/paginacao';
 import { UsuarioLogado } from '../common/usuario-logado';
 import { EstoqueService } from '../estoque/estoque.service';
+import { FiscalService } from '../fiscal/fiscal.service';
 import { FormaPagamento } from '../generated/prisma/enums';
 import { PrismaService } from '../prisma/prisma.service';
-import { proximoNumeroPedido, VendasService } from '../vendas/vendas.service';
+import { exigirSemNotaAutorizada, proximoNumeroPedido, VendasService } from '../vendas/vendas.service';
 import { AbrirCaixaDto, FecharCaixaDto, FiltroCaixaDto, MovimentoCaixaDto, VendaPdvDto } from './pdv.dto';
 
 export const NOME_CONSUMIDOR_FINAL = 'Consumidor final';
@@ -24,6 +25,7 @@ export class PdvService {
     private readonly prisma: PrismaService,
     private readonly vendas: VendasService,
     private readonly estoque: EstoqueService,
+    private readonly fiscal: FiscalService,
   ) {}
 
   // ─────────── Sessão de caixa ───────────
@@ -126,6 +128,7 @@ export class PdvService {
             createdAt: true,
             cliente: { select: { id: true, nome: true } },
             pagamentos: { select: { forma: true, valor: true, troco: true } },
+            notas: { select: { id: true, numero: true, status: true }, orderBy: { createdAt: 'desc' } },
           },
           orderBy: { numero: 'desc' },
         },
@@ -199,7 +202,7 @@ export class PdvService {
     const custo = new Map(produtos.map((p) => [p.id, p.precoCusto]));
     const categoria = await this.prisma.categoriaFinanceira.findFirst({ where: { empresaId, tipo: 'RECEBER', nome: 'Vendas' } });
 
-    return this.prisma.$transaction(async (tx) => {
+    const venda = await this.prisma.$transaction(async (tx) => {
       const numero = await proximoNumeroPedido(tx, empresaId);
       const venda = await tx.pedidoVenda.create({
         data: {
@@ -255,6 +258,17 @@ export class PdvService {
       const troco = pagamentos.reduce((s, p) => s + p.troco, 0);
       return { id: venda.id, numero, total, troco: centavos(troco) };
     }, { timeout: 15_000 });
+
+    // NFC-e automática, se ligada nas configurações. Se a emissão falhar, a venda continua
+    // registrada e o erro volta para a tela, para emitir depois em "Notas fiscais".
+    const config = await this.prisma.configuracaoFiscal.findUnique({ where: { empresaId }, select: { emitirNfceNoPdv: true } });
+    if (!config?.emitirNfceNoPdv) return { ...venda, nota: null, erroFiscal: null };
+    try {
+      const nota = await this.fiscal.emitirNfce(usuario, venda.id, { documento: dto.documentoNota });
+      return { ...venda, nota, erroFiscal: nota.status === 'AUTORIZADA' ? null : `${nota.codigoStatus ?? ''} ${nota.motivo ?? ''}`.trim() };
+    } catch (erro) {
+      return { ...venda, nota: null, erroFiscal: (erro as Error).message };
+    }
   }
 
   /** Cancela uma venda do caixa ainda aberto: devolve o estoque e cancela os lançamentos. */
@@ -267,6 +281,7 @@ export class PdvService {
     if (!venda?.caixa) throw new NotFoundException('Venda do PDV não encontrada');
     if (venda.status === 'CANCELADO') throw new BadRequestException('Esta venda já está cancelada');
     if (venda.caixa.status !== 'ABERTO') throw new BadRequestException('O caixa desta venda já foi fechado');
+    await exigirSemNotaAutorizada(this.prisma, venda.id);
     const gerente = usuario.perfil === 'ADMIN' || usuario.perfil === 'GERENTE';
     if (!gerente && venda.caixa.usuarioId !== usuario.id) throw new ForbiddenException('Esta venda é de outro caixa');
 

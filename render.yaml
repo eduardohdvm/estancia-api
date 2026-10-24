@@ -27,6 +27,9 @@ services:
         generateValue: true
       - key: JWT_EXPIRES_IN
         value: 8h
+      # Chave que criptografa o certificado digital e o CSC no banco. Não troque depois de enviar o certificado.
+      - key: FISCAL_CHAVE
+        generateValue: true
       # Cria a empresa de demonstração (admin@demo.com / demo123). Mude para "false" quando for usar de verdade.
       - key: SEED_DEMO
         value: "true"

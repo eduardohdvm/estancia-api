@@ -8,7 +8,9 @@ import {
   Building2,
   CalendarCheck,
   ClipboardList,
+  FileText,
   FileUp,
+  Settings2,
   KanbanSquare,
   LayoutDashboard,
   Landmark,
@@ -71,6 +73,13 @@ const menu: { grupo: string; itens: ItemMenu[] }[] = [
       { href: '/financeiro/pagar', rotulo: 'Contas a pagar', icone: ArrowUpCircle, perfis: ['GERENTE', 'FINANCEIRO'] },
       { href: '/financeiro/contas', rotulo: 'Caixa e bancos', icone: Landmark, perfis: ['GERENTE', 'FINANCEIRO'] },
       { href: '/pdv/caixas', rotulo: 'Fechamentos de caixa', icone: Receipt, perfis: ['GERENTE'] },
+    ],
+  },
+  {
+    grupo: 'Fiscal',
+    itens: [
+      { href: '/fiscal', rotulo: 'Notas fiscais', icone: FileText, perfis: ['GERENTE', 'FINANCEIRO', 'VENDEDOR'] },
+      { href: '/fiscal/configuracao', rotulo: 'Configuração fiscal', icone: Settings2, perfis: ['GERENTE'] },
     ],
   },
   { grupo: 'Análises', itens: [{ href: '/relatorios', rotulo: 'Relatórios', icone: BarChart3, perfis: ['GERENTE', 'FINANCEIRO'] }] },

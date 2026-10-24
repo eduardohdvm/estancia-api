@@ -39,6 +39,9 @@ const APELIDOS_PESSOA = {
   cep: ['cep'],
   endereco: ['endereco', 'logradouro', 'rua'],
   numero: ['numero', 'num', 'nro', 'n'],
+  complemento: ['complemento', 'compl'],
+  codigoMunicipio: ['codigoibge', 'ibge', 'codigomunicipio', 'codmunicipio', 'codigodomunicipio'],
+  inscricaoEstadual: ['inscricaoestadual', 'ie', 'inscestadual'],
   bairro: ['bairro'],
   cidade: ['cidade', 'municipio'],
   uf: ['uf', 'estado'],
@@ -165,13 +168,16 @@ export class ImportacaoService {
       // Célula vazia não apaga o que já está cadastrado: só entram os valores preenchidos.
       const dados: Prisma.PessoaUncheckedUpdateInput = { nome, tipo };
       if (documento) dados.documento = documento;
-      for (const campo of ['nomeFantasia', 'telefone', 'cep', 'endereco', 'numero', 'bairro', 'cidade', 'observacoes'] as const) {
+      for (const campo of ['nomeFantasia', 'telefone', 'cep', 'endereco', 'numero', 'complemento', 'bairro', 'cidade', 'inscricaoEstadual', 'observacoes'] as const) {
         const valor = col[campo] ? texto(l[col[campo]!]) : undefined;
         if (valor !== undefined) dados[campo] = valor;
       }
       const email = col.email ? texto(l[col.email]) : undefined;
       if (email && !emailValido(email)) erros.push(`E-mail "${email}" inválido`);
       if (email) dados.email = email.toLowerCase();
+      const ibge = col.codigoMunicipio ? texto(l[col.codigoMunicipio])?.replace(/\D/g, '') : undefined;
+      if (ibge && ibge.length !== 7) erros.push(`Código IBGE "${ibge}" deve ter 7 dígitos`);
+      if (ibge) dados.codigoMunicipio = ibge;
       const uf = col.uf ? texto(l[col.uf])?.toUpperCase() : undefined;
       if (uf && !/^[A-Z]{2}$/.test(uf)) erros.push(`UF "${uf}" deve ter 2 letras`);
       if (uf) dados.uf = uf;

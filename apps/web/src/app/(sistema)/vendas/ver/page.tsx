@@ -1,11 +1,12 @@
 'use client';
 
-import { ArrowLeft, Ban, CheckCircle2, FileCheck2, Pencil, Printer } from 'lucide-react';
+import { ArrowLeft, Ban, CheckCircle2, FileCheck2, FileText, Pencil, Printer } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import { AcoesFormulario, Alerta, Botao, Cabecalho, Campo, Cartao, Celula, Modal, Selecao, Status, Tabela } from '@/components/ui';
 import { api } from '@/lib/api';
+import { rotuloModelo } from '@/lib/fiscal';
 import { data, dataHora, hojeIso, moeda, numero, vencido } from '@/lib/formato';
 import { useSessao } from '@/lib/sessao';
 import type { ContaBancaria, Pedido } from '@/lib/tipos';
@@ -33,8 +34,24 @@ function DetalhePedido() {
     }
   }
 
+  async function emitirNfe() {
+    setExecutando('nfe');
+    setErroAcao('');
+    try {
+      const nota = await api<{ status: string; codigoStatus: number | null; motivo: string | null }>(`/fiscal/pedidos/${id}/nfe`, { metodo: 'POST' });
+      if (nota.status !== 'AUTORIZADA') setErroAcao(`A SEFAZ recusou a NF-e: ${nota.codigoStatus ?? ''} ${nota.motivo ?? ''}`);
+      await recarregar();
+    } catch (e) {
+      setErroAcao((e as Error).message);
+    } finally {
+      setExecutando('');
+    }
+  }
+
   if (!pedido) return <Alerta>{erro}</Alerta>;
   const aberto = pedido.status === 'ORCAMENTO' || pedido.status === 'APROVADO';
+  const nfeAutorizada = pedido.notas.find((n) => n.status === 'AUTORIZADA' && n.modelo === 'NFE');
+  const podeEmitirNfe = pedido.status === 'FATURADO' && pedido.origem !== 'PDV' && !nfeAutorizada && pode('GERENTE', 'FINANCEIRO', 'VENDEDOR');
 
   return (
     <>
@@ -131,6 +148,37 @@ function DetalhePedido() {
           </tr>
         ))}
       </Tabela>
+
+      {(pedido.notas.length > 0 || podeEmitirNfe) && (
+        <Cartao className="mt-6 flex flex-col gap-3 p-5 print:hidden">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="flex items-center gap-2 font-semibold text-slate-900">
+              <FileText className="size-5 text-indigo-600" /> Nota fiscal
+            </h2>
+            {podeEmitirNfe && (
+              <Botao carregando={executando === 'nfe'} onClick={emitirNfe}>
+                <FileText className="size-4" /> {pedido.notas.some((n) => n.status === 'REJEITADA') ? 'Tentar emitir a NF-e de novo' : 'Emitir NF-e'}
+              </Botao>
+            )}
+          </div>
+          {pedido.notas.map((n) => (
+            <div key={n.id} className="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-3 text-sm">
+              <span className="font-medium text-slate-900">
+                {rotuloModelo(n.modelo)} nº {n.numero}
+              </span>
+              <Status valor={n.status} />
+              <Status valor={n.ambiente} />
+              {n.status !== 'AUTORIZADA' && n.motivo && <span className="text-xs text-slate-500">{n.motivo}</span>}
+              {(n.status === 'AUTORIZADA' || n.status === 'CANCELADA') && (
+                <a href={`/danfe/?id=${n.id}`} target="_blank" className="ml-auto inline-flex items-center gap-1 text-indigo-600 hover:underline">
+                  <Printer className="size-4" /> DANFE
+                </a>
+              )}
+            </div>
+          ))}
+          {!pedido.notas.length && <p className="text-sm text-slate-500">Este pedido ainda não tem NF-e.</p>}
+        </Cartao>
+      )}
 
       {pedido.lancamentos.length > 0 && (
         <>
