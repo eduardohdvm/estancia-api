@@ -1,35 +1,48 @@
-# Hospedagem no Render (https://render.com).
+# Estância Maciel — Render Blueprint (https://render.com/docs/blueprint-spec)
 # No painel: New → Blueprint → escolha este repositório → Apply.
-# Cria o banco PostgreSQL e um único serviço que roda a API e entrega o site.
+#
+# Por enquanto só o ambiente de HOMOLOGAÇÃO (testes). O de PRODUÇÃO entra no go-live (Fase 10),
+# para não criar um serviço pago antes da hora. O banco NÃO é do Render: é o Neon (ADR-006).
+#
+# No Apply, o Render pede só 3 valores (sync: false): os dois endereços do Neon e a lista de
+# hosts permitidos. O administrador é criado depois, na tela de primeiro acesso do painel.
+# Passo a passo: docs/infra-hml.md
 
-databases:
-  - name: verissimo-db
-    plan: free # o banco grátis expira em 30 dias; troque para um plano pago antes de usar com clientes
-    region: virginia # região mais próxima do Brasil
-    databaseName: verissimo
-    user: verissimo
+envVarGroups:
+  - name: estancia-hml
+    envVars:
+      - key: APP_ENV
+        value: hml
+      - key: SEED_DEMO
+        value: "false"
+      - key: MODULOS_OPCIONAIS
+        value: ""
+      - key: REGISTRO_PUBLICO
+        value: "false"
+      - key: JWT_EXPIRES_IN
+        value: 8h
+      - key: JWT_SECRET
+        generateValue: true
+      - key: WEB_URL # origens liberadas no CORS: o catálogo HML no Firebase (preenchido na Fase 4)
+        value: ""
+      - key: DATABASE_URL # Neon HML com pooler (host com -pooler), sslmode=verify-full
+        sync: false
+      - key: DIRECT_URL # Neon HML sem pooler: usado só pelas migrations
+        sync: false
+      - key: DB_HOSTS_PERMITIDOS # hosts do Neon HML; o servidor não sobe com outro banco
+        sync: false
 
 services:
   - type: web
-    name: verissimo-erp
+    name: estancia-api-hml
     runtime: node
-    plan: free # dorme após 15 min sem acesso e leva ~1 min para acordar
-    region: virginia
+    plan: free # dorme após 15 min sem acesso; aceitável em HML (ADR-012)
+    region: ohio # perto do Neon us-east-2; ajuste se o projeto Neon ficar em outra região
+    branch: develop
+    # Publica a cada push em develop, mas só depois que o CI do GitHub passar.
+    autoDeployTrigger: checksPass
     buildCommand: npm ci && npm run build
     startCommand: npm run start:prod -w apps/api
     healthCheckPath: /api/saude
     envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: verissimo-db
-          property: connectionString
-      - key: JWT_SECRET
-        generateValue: true
-      - key: JWT_EXPIRES_IN
-        value: 8h
-      # Chave que criptografa o certificado digital e o CSC no banco. Não troque depois de enviar o certificado.
-      - key: FISCAL_CHAVE
-        generateValue: true
-      # Cria a empresa de demonstração (admin@demo.com / demo123). Mude para "false" quando for usar de verdade.
-      - key: SEED_DEMO
-        value: "true"
+      - fromGroup: estancia-hml

@@ -1,14 +1,14 @@
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'node:crypto';
 
 // Certificado digital, senha e CSC ficam criptografados no banco (AES-256-GCM).
-// A chave vem de FISCAL_CHAVE (recomendado) ou, na falta dela, do JWT_SECRET.
+// A chave vem de FISCAL_CHAVE, sem cair para o JWT_SECRET: os dois segredos ficam independentes.
 // Atenção: trocar essa variável torna ilegíveis os certificados já gravados.
 
 let chaveCache: Buffer | null = null;
 function chave() {
   if (chaveCache) return chaveCache;
-  const base = process.env.FISCAL_CHAVE ?? process.env.JWT_SECRET;
-  if (!base) throw new Error('Defina FISCAL_CHAVE (ou JWT_SECRET) para guardar dados fiscais');
+  const base = process.env.FISCAL_CHAVE;
+  if (!base) throw new Error('Defina FISCAL_CHAVE para guardar dados fiscais');
   chaveCache = scryptSync(base, 'verissimo-fiscal', 32);
   return chaveCache;
 }

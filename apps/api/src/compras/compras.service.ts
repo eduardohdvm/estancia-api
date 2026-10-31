@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { centavos, hoje, somarDias } from '../common/datas';
 import { paginar, resultado } from '../common/paginacao';
+import { proximoNumero } from '../common/sequencia';
 import { UsuarioLogado } from '../common/usuario-logado';
 import { EstoqueService } from '../estoque/estoque.service';
 import { Prisma } from '../generated/prisma/client';
@@ -52,9 +53,8 @@ export class ComprasService {
   async criar(empresaId: string, dto: SalvarCompraDto) {
     const dados = await this.calcular(empresaId, dto);
     return this.prisma.$transaction(async (tx) => {
-      const ultimo = await tx.pedidoCompra.aggregate({ where: { empresaId }, _max: { numero: true } });
       return tx.pedidoCompra.create({
-        data: { ...dados.pedido, empresaId, numero: (ultimo._max.numero ?? 0) + 1, itens: { create: dados.itens } },
+        data: { ...dados.pedido, empresaId, numero: await proximoNumero(tx, empresaId, 'COMPRA'), itens: { create: dados.itens } },
         include: incluir,
       });
     });

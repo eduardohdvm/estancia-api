@@ -5,17 +5,21 @@ import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import bcrypt from 'bcryptjs';
 import { criarCadastrosIniciais } from '../src/auth/auth.service';
+import { hashSenha } from '../src/common/senha';
 import { PrismaClient } from '../src/generated/prisma/client';
 import { popularExemplos } from './exemplos';
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
 
 async function main() {
-  // Na hospedagem o seed roda a cada início; SEED_DEMO=false desliga a empresa de demonstração.
-  if (process.env.SEED_DEMO === 'false') {
-    console.log('SEED_DEMO=false: empresa de demonstração não será criada.');
+  await criarEstanciaMaciel();
+
+  // Na hospedagem o seed roda a cada início. A demonstração só é criada com SEED_DEMO=true (nunca em PRD).
+  if (process.env.SEED_DEMO !== 'true') {
+    console.log('SEED_DEMO desligado: empresa de demonstração não será criada.');
     return;
   }
+  if (process.env.APP_ENV === 'prd') throw new Error('SEED_DEMO=true não é permitido em PRD');
   if (!(await prisma.usuario.findUnique({ where: { email: 'admin@demo.com' } }))) await criarEmpresaDemo();
 
   // Histórico de seis meses, gerado só enquanto a empresa de demonstração não tem pedidos.
@@ -25,6 +29,32 @@ async function main() {
     return;
   }
   await prisma.$transaction((tx) => popularExemplos(tx, empresaId), { timeout: 300_000, maxWait: 30_000 });
+}
+
+/**
+ * Empresa única da plataforma (ADR-007) e o primeiro administrador.
+ * Só age quando ainda não existe nenhum usuário com ADMIN_EMAIL; a senha inicial
+ * vem de ADMIN_SENHA_INICIAL e deve ser trocada no primeiro acesso.
+ */
+async function criarEstanciaMaciel() {
+  const email = process.env.ADMIN_EMAIL?.toLowerCase();
+  const senha = process.env.ADMIN_SENHA_INICIAL;
+  if (!email || !senha) {
+    console.log('ADMIN_EMAIL/ADMIN_SENHA_INICIAL não definidos: administrador inicial não será criado.');
+    return;
+  }
+  if (await prisma.usuario.findUnique({ where: { email } })) return;
+  if (senha.length < 12) throw new Error('ADMIN_SENHA_INICIAL precisa ter pelo menos 12 caracteres');
+
+  await prisma.$transaction(async (tx) => {
+    const existente = await tx.empresa.findFirst({ where: { nome: 'Estância Maciel' } });
+    const empresa = existente ?? (await tx.empresa.create({ data: { nome: 'Estância Maciel' } }));
+    if (!existente) await criarCadastrosIniciais(tx, empresa.id);
+    await tx.usuario.create({
+      data: { empresaId: empresa.id, nome: 'Administrador', email, senhaHash: await hashSenha(senha), perfil: 'ADMIN' },
+    });
+  });
+  console.log(`Administrador inicial criado: ${email}`);
 }
 
 async function criarEmpresaDemo() {

@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
-import bcrypt from 'bcryptjs';
+import { hashSenha } from '../common/senha';
 import { PrismaService } from '../prisma/prisma.service';
 import { AtualizarUsuarioDto, CriarUsuarioDto } from './usuarios.dto';
 
@@ -23,7 +23,7 @@ export class UsuariosService {
       throw new ConflictException('Este e-mail já está cadastrado');
     }
     return this.prisma.usuario.create({
-      data: { ...dto, email, empresaId, senhaHash: await bcrypt.hash(senha, 10) },
+      data: { ...dto, email, empresaId, senhaHash: await hashSenha(senha) },
       select: campos,
     });
   }
@@ -38,7 +38,7 @@ export class UsuariosService {
       data: {
         ...dto,
         email: dto.email?.toLowerCase(),
-        ...(senha ? { senhaHash: await bcrypt.hash(senha, 10) } : {}),
+        ...(senha ? { senhaHash: await hashSenha(senha) } : {}),
       },
       select: campos,
     });

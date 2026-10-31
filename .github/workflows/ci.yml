@@ -1,0 +1,105 @@
+# CI/CD do estancia-api.
+# - PR e push em qualquer branch: lint, tipos, testes (com Postgres), build, e2e e auditoria.
+# - push em develop: o Render publica HML sozinho quando este CI passa (autoDeployTrigger: checksPass).
+# - push em main: depois de tudo verde, espera aprovação no environment "production" e publica em PRD
+#   (o serviço de PRD e o secret RENDER_DEPLOY_HOOK_PRD são criados no go-live).
+name: CI
+
+on:
+  push:
+    branches: [main, develop, 'feature/**', 'hotfix/**']
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: estancia
+          POSTGRES_PASSWORD: estancia
+          POSTGRES_DB: estancia_teste
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U estancia" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      APP_ENV: test
+      DATABASE_URL: postgresql://estancia:estancia@localhost:5432/estancia_teste
+      DIRECT_URL: postgresql://estancia:estancia@localhost:5432/estancia_teste
+      DATABASE_URL_TESTE: postgresql://estancia:estancia@localhost:5432/estancia_teste
+      JWT_SECRET: segredo-de-teste-do-ci-com-mais-de-32-caracteres
+      FISCAL_CHAVE: chave-fiscal-de-teste-do-ci
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Auditoria de dependências de produção
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Prisma Client e migrations
+        working-directory: apps/api
+        run: npx prisma generate && npx prisma migrate deploy
+
+      - name: Lint
+        run: npm run lint -w apps/api
+
+      - name: Tipos
+        run: npm run typecheck -w apps/api
+
+      - name: Testes (unitários e concorrência)
+        run: npm test -w apps/api
+
+      - name: Build (API + painel)
+        run: npm run build
+
+      - name: E2E da API
+        working-directory: apps/api
+        env:
+          # Os e2e herdados criam uma empresa por execução: só aqui o registro público fica ligado.
+          REGISTRO_PUBLICO: 'true'
+          MODULOS_OPCIONAIS: pdv,crm
+        run: |
+          node dist/main.js > api.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:3333/api/saude && break; sleep 1; done
+          npm run test:e2e
+          node test/fase2.e2e.mjs
+
+      - name: Log da API (em caso de falha)
+        if: failure()
+        run: cat apps/api/api.log || true
+
+  deploy-prd:
+    needs: verificar
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.PRD_URL != ''
+    runs-on: ubuntu-latest
+    # O environment "production" tem revisores obrigatórios: o job espera a aprovação manual.
+    environment:
+      name: production
+      url: ${{ vars.PRD_URL }}
+    steps:
+      - name: Publicar no Render (PRD)
+        run: curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_PRD }}"
+      - name: Esperar o health check
+        run: |
+          for i in $(seq 1 60); do
+            curl -sf "${{ vars.PRD_URL }}/api/saude" && exit 0
+            sleep 10
+          done
+          echo "PRD não respondeu em 10 minutos. Use o rollback do Render (docs/infra-hml.md)" && exit 1

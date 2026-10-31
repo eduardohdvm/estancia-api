@@ -1,16 +1,23 @@
-import { BadRequestException, ConflictException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import bcrypt from 'bcryptjs';
 import { createHash, randomBytes } from 'node:crypto';
 import { LimiteTentativas } from '../common/limite';
+import { hashSenha } from '../common/senha';
 import { UsuarioLogado } from '../common/usuario-logado';
 import { Email, EmailService } from '../email/email.module';
 import { PrismaService, Tx } from '../prisma/prisma.service';
-import { EsqueciSenhaDto, LoginDto, RedefinirSenhaDto, RegistrarDto } from './auth.dto';
+import { EsqueciSenhaDto, LoginDto, PrimeiroAcessoDto, RedefinirSenhaDto, RegistrarDto } from './auth.dto';
 
 const VALIDADE_LINK_MS = 60 * 60 * 1000; // 1 hora
 const limitePorIp = new LimiteTentativas(20, 15 * 60 * 1000);
 const limitePorEmail = new LimiteTentativas(3, 15 * 60 * 1000);
+// Login: freia força bruta por IP e por conta.
+const loginPorIp = new LimiteTentativas(30, 15 * 60 * 1000);
+const loginPorEmail = new LimiteTentativas(10, 15 * 60 * 1000);
+
+const escaparHtml = (texto: string) =>
+  texto.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
 const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
 
@@ -25,7 +32,7 @@ function emailRecuperacao(nome: string, para: string, link: string): Email {
     texto: `Olá, ${primeiroNome}!\n\nRecebemos um pedido para criar uma senha nova no Verissimo ERP.\nAbra o link abaixo (vale por 1 hora):\n\n${link}\n\nSe não foi você, ignore este e-mail: sua senha continua a mesma.`,
     html: `<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;color:#0f172a">
   <h2 style="color:#4f46e5">Verissimo ERP</h2>
-  <p>Olá, ${primeiroNome}!</p>
+  <p>Olá, ${escaparHtml(primeiroNome)}!</p>
   <p>Recebemos um pedido para criar uma senha nova. Clique no botão abaixo (o link vale por 1 hora):</p>
   <p style="margin:28px 0"><a href="${link}" style="background:#4f46e5;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none">Criar senha nova</a></p>
   <p style="font-size:13px;color:#64748b">Se o botão não funcionar, copie este endereço no navegador:<br>${link}</p>
@@ -53,13 +60,41 @@ export class AuthService {
     private readonly email: EmailService,
   ) {}
 
-  async login({ email, senha }: LoginDto) {
+  async login({ email, senha }: LoginDto, ip: string) {
+    email = email.toLowerCase();
+    loginPorIp.registrar(ip);
+    loginPorEmail.registrar(email);
     const usuario = await this.prisma.usuario.findUnique({
-      where: { email: email.toLowerCase() },
+      where: { email },
       include: { empresa: true },
     });
     const ok = usuario && usuario.ativo && usuario.empresa.ativa && (await bcrypt.compare(senha, usuario.senhaHash));
     if (!ok) throw new UnauthorizedException('E-mail ou senha incorretos');
+    return this.sessao(usuario);
+  }
+
+  /** O primeiro acesso só existe enquanto o sistema não tem nenhum usuário. */
+  async primeiroAcessoDisponivel() {
+    return { disponivel: (await this.prisma.usuario.count()) === 0 };
+  }
+
+  /**
+   * Cria a empresa Estância Maciel e o primeiro administrador. Funciona uma única vez:
+   * depois que existe qualquer usuário, a rota responde 404. O lock garante que dois
+   * pedidos simultâneos não criem dois administradores.
+   */
+  async primeiroAcesso(dto: PrimeiroAcessoDto) {
+    const usuario = await this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('estancia:primeiro-acesso'))`;
+      if ((await tx.usuario.count()) > 0) throw new NotFoundException('O administrador já foi criado. Entre com seu e-mail e senha.');
+      const existente = await tx.empresa.findFirst({ where: { nome: 'Estância Maciel' } });
+      const empresa = existente ?? (await tx.empresa.create({ data: { nome: 'Estância Maciel' } }));
+      if (!existente) await criarCadastrosIniciais(tx, empresa.id);
+      return tx.usuario.create({
+        data: { empresaId: empresa.id, nome: dto.nome, email: dto.email.toLowerCase(), senhaHash: await hashSenha(dto.senha), perfil: 'ADMIN' },
+        include: { empresa: true },
+      });
+    });
     return this.sessao(usuario);
   }
 
@@ -69,7 +104,7 @@ export class AuthService {
     if (await this.prisma.usuario.findUnique({ where: { email } })) {
       throw new ConflictException('Este e-mail já está cadastrado');
     }
-    const senhaHash = await bcrypt.hash(dto.senha, 10);
+    const senhaHash = await hashSenha(dto.senha);
 
     const usuario = await this.prisma.$transaction(async (tx) => {
       const empresa = await tx.empresa.create({ data: { nome: dto.empresa, cnpj: dto.cnpj || null, email } });
@@ -116,7 +151,7 @@ export class AuthService {
       throw new BadRequestException('Este link é inválido ou expirou. Peça um novo em "Esqueci minha senha".');
     }
     await this.prisma.$transaction([
-      this.prisma.usuario.update({ where: { id: pedido.usuarioId }, data: { senhaHash: await bcrypt.hash(senha, 10) } }),
+      this.prisma.usuario.update({ where: { id: pedido.usuarioId }, data: { senhaHash: await hashSenha(senha) } }),
       this.prisma.recuperacaoSenha.update({ where: { id: pedido.id }, data: { usadoEm: new Date() } }),
     ]);
     return { mensagem: 'Senha alterada. Entre com a senha nova.' };

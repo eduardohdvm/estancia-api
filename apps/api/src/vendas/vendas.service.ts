@@ -1,9 +1,11 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { centavos, hoje, somarDias } from '../common/datas';
 import { paginar, resultado } from '../common/paginacao';
+import { proximoNumero } from '../common/sequencia';
 import { UsuarioLogado } from '../common/usuario-logado';
 import { EstoqueService } from '../estoque/estoque.service';
 import { Prisma } from '../generated/prisma/client';
+import { StatusPedido } from '../generated/prisma/enums';
 import { PrismaService, Tx } from '../prisma/prisma.service';
 import { FaturarPedidoDto, FiltroPedidoDto, SalvarPedidoDto } from './vendas.dto';
 
@@ -86,7 +88,10 @@ export class VendasService {
   async aprovar(empresaId: string, id: string) {
     const pedido = await this.prisma.pedidoVenda.findFirstOrThrow({ where: { id, empresaId } });
     if (pedido.status !== 'ORCAMENTO') throw new BadRequestException('Só orçamentos podem ser aprovados');
-    return this.prisma.pedidoVenda.update({ where: { id }, data: { status: 'APROVADO' }, include: incluir });
+    return this.prisma.$transaction(async (tx) => {
+      await trocarStatus(tx, id, ['ORCAMENTO'], { status: 'APROVADO' });
+      return tx.pedidoVenda.findUniqueOrThrow({ where: { id }, include: incluir });
+    });
   }
 
   /** Fatura o pedido: baixa o estoque e gera as parcelas no contas a receber. */
@@ -107,6 +112,8 @@ export class VendasService {
     });
 
     return this.prisma.$transaction(async (tx) => {
+      // Primeiro "reserva" a transição: um segundo clique em Faturar para aqui com 409.
+      await trocarStatus(tx, id, ['ORCAMENTO', 'APROVADO'], { status: 'FATURADO', faturadoEm: new Date() });
       for (const item of pedido.itens) {
         // Guarda o custo de agora: é ele que entra na margem e no CMV dos relatórios.
         await tx.pedidoVendaItem.update({ where: { id: item.id }, data: { custoUnitario: item.produto.precoCusto } });
@@ -146,11 +153,7 @@ export class VendasService {
         });
       }
 
-      return tx.pedidoVenda.update({
-        where: { id },
-        data: { status: 'FATURADO', faturadoEm: new Date() },
-        include: incluir,
-      });
+      return tx.pedidoVenda.findUniqueOrThrow({ where: { id }, include: incluir });
     });
   }
 
@@ -169,6 +172,8 @@ export class VendasService {
     }
 
     return this.prisma.$transaction(async (tx) => {
+      // Só cancela se ninguém mudou o pedido desde a leitura (evita devolver estoque duas vezes).
+      await trocarStatus(tx, id, [pedido.status], { status: 'CANCELADO' });
       if (pedido.status === 'FATURADO') {
         for (const item of pedido.itens) {
           if (item.produto.servico) continue;
@@ -185,7 +190,7 @@ export class VendasService {
         }
         await tx.lancamento.updateMany({ where: { pedidoId: id, status: 'ABERTO' }, data: { status: 'CANCELADO' } });
       }
-      return tx.pedidoVenda.update({ where: { id }, data: { status: 'CANCELADO' }, include: incluir });
+      return tx.pedidoVenda.findUniqueOrThrow({ where: { id }, include: incluir });
     });
   }
 
@@ -235,9 +240,22 @@ export class VendasService {
 }
 
 /** Próximo número de pedido da empresa (vendas e PDV compartilham a numeração). */
-export async function proximoNumeroPedido(tx: Tx, empresaId: string) {
-  const ultimo = await tx.pedidoVenda.aggregate({ where: { empresaId }, _max: { numero: true } });
-  return (ultimo._max.numero ?? 0) + 1;
+export function proximoNumeroPedido(tx: Tx, empresaId: string) {
+  return proximoNumero(tx, empresaId, 'PEDIDO');
+}
+
+/**
+ * Muda o status só se ele ainda for um dos esperados (compare-and-set dentro da transação).
+ * Se outra requisição mudou o pedido antes, responde 409 em vez de repetir efeitos.
+ */
+export async function trocarStatus(
+  tx: Tx,
+  id: string,
+  de: StatusPedido[],
+  dados: Prisma.PedidoVendaUpdateManyMutationInput & { status: StatusPedido },
+) {
+  const { count } = await tx.pedidoVenda.updateMany({ where: { id, status: { in: de } }, data: dados });
+  if (count === 0) throw new ConflictException('Este pedido foi alterado por outra operação. Atualize a tela e tente de novo');
 }
 
 /** Venda com NF-e/NFC-e autorizada só pode ser cancelada depois de cancelar a nota na SEFAZ. */

@@ -1,4 +1,27 @@
-# Verissimo ERP
+# Estância Maciel — API e painel administrativo
+
+Backend (NestJS + Prisma + PostgreSQL/Neon) e painel (Next.js) da **Estância Maciel — Culinária Caipira**, publicados juntos no Render. Este projeto nasceu do **Verissimo ERP** (histórico preservado) e evolui por fases. Arquitetura e decisões: `../docs/`. Infraestrutura, CI/CD e ambientes: [docs/infra-hml.md](docs/infra-hml.md).
+
+**O que mudou em relação ao Verissimo (Fase 3, fundação):**
+- **Empresa e cadastro:** empresa única. O cadastro público de empresas fica desligado (`REGISTRO_PUBLICO`). No sistema recém-instalado, a tela **primeiro acesso** cria a Estância Maciel e o administrador, e só funciona enquanto não existe nenhum usuário. Para automação também dá para usar `ADMIN_EMAIL`/`ADMIN_SENHA_INICIAL` no seed.
+- **Módulos herdados:** PDV, CRM e fiscal ficam desligados por padrão (`MODULOS_OPCIONAIS`), com o código preservado.
+- **Ambientes:** a API não sobe com o banco de outro ambiente (`APP_ENV` + `DB_HOSTS_PERMITIDOS`), nem com segredos fracos ou com a demonstração em PRD.
+- **Segurança:**
+  - Limite de tentativas no login e cabeçalhos de segurança (helmet).
+  - Perfil e "ativo" revalidados no banco a cada minuto.
+  - bcrypt com custo 12 e `FISCAL_CHAVE` independente do `JWT_SECRET`.
+  - Permissões na exclusão de clientes e fornecedores.
+- **Concorrência:**
+  - O saldo de estoque é travado durante a movimentação (`FOR UPDATE`).
+  - Faturar, aprovar e cancelar mudam o status com compare-and-set (409 em caso de conflito).
+  - A numeração usa a tabela `Sequencia`, sem `max+1`.
+- **Qualidade:** Vitest (unitários e concorrência), ESLint, Swagger em `/api/docs` (fora de PRD) e GitHub Actions com deploy HML e PRD aprovado manualmente.
+
+Comandos: veja "DEV local" em [docs/infra-hml.md](docs/infra-hml.md).
+
+---
+
+# Verissimo ERP (documentação herdada)
 
 Sistema de gestão empresarial (ERP) em modelo SaaS: várias empresas usam o mesmo sistema, cada uma vendo apenas os próprios dados.
 

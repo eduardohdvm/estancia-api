@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthModule } from './auth/auth.module';
+import { moduloLigado } from './common/ambiente';
 import { AuthGuard } from './common/auth.guard';
 import { PrismaErroFilter } from './common/prisma-erro.filter';
 import { ComprasModule } from './compras/compras.module';
@@ -39,13 +40,14 @@ import { VendasModule } from './vendas/vendas.module';
     VendasModule,
     FinanceiroModule,
     DashboardModule,
-    PdvModule,
     ComprasModule,
-    CrmModule,
     RelatoriosModule,
     ImportacaoModule,
     EmailModule,
-    FiscalModule,
+    // Herdados do Verissimo, desligados por padrão (ADR-004). O PDV depende do fiscal.
+    ...(moduloLigado('pdv') ? [PdvModule] : []),
+    ...(moduloLigado('crm') ? [CrmModule] : []),
+    ...(moduloLigado('fiscal') || moduloLigado('pdv') ? [FiscalModule] : []),
   ],
   controllers: [SaudeController],
   providers: [

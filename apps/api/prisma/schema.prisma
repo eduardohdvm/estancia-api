@@ -57,6 +57,7 @@ model Empresa {
   atividades            Atividade[]
   configuracaoFiscal    ConfiguracaoFiscal?
   notasFiscais          NotaFiscal[]
+  sequencias            Sequencia[]
 }
 
 model Usuario {
@@ -92,6 +93,17 @@ model RecuperacaoSenha {
   usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
   @@index([usuarioId])
+}
+
+// Numeração por empresa sem corrida: UPDATE ... SET valor = valor + 1 RETURNING valor (ADR-018).
+model Sequencia {
+  empresaId String
+  nome      String // PEDIDO, COMPRA, CAIXA
+  valor     Int    @default(0)
+
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+
+  @@id([empresaId, nome])
 }
 
 // ───────────────────────────── Cadastros ─────────────────────────────

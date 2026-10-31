@@ -1,6 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { centavos, hoje, somarDias } from '../common/datas';
 import { paginar, resultado } from '../common/paginacao';
+import { proximoNumero } from '../common/sequencia';
 import { UsuarioLogado } from '../common/usuario-logado';
 import { EstoqueService } from '../estoque/estoque.service';
 import { FiscalService } from '../fiscal/fiscal.service';
@@ -50,13 +51,12 @@ export class PdvService {
     if (!conta) throw new BadRequestException('Cadastre uma conta (caixa ou banco) antes de abrir o caixa');
 
     const caixa = await this.prisma.$transaction(async (tx) => {
-      const ultimo = await tx.caixa.aggregate({ where: { empresaId }, _max: { numero: true } });
       return tx.caixa.create({
         data: {
           empresaId,
           usuarioId: usuario.id,
           contaBancariaId: conta.id,
-          numero: (ultimo._max.numero ?? 0) + 1,
+          numero: await proximoNumero(tx, empresaId, 'CAIXA'),
           valorAbertura: dto.valorAbertura,
         },
       });

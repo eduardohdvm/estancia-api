@@ -2,18 +2,36 @@ import 'dotenv/config';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import type { NextFunction, Request, Response } from 'express';
+import helmet from 'helmet';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { AppModule } from './app.module';
+import { appEnv, conferirBancos, conferirSegredos } from './common/ambiente';
 
 async function bootstrap() {
-  if (!process.env.JWT_SECRET) throw new Error('Defina JWT_SECRET no arquivo .env');
+  // Recusa subir com configuração perigosa: segredos faltando ou banco de outro ambiente (ADR-006).
+  const ambiente = appEnv();
+  conferirSegredos(ambiente);
+  const hostBanco = conferirBancos(ambiente)[0];
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.setGlobalPrefix('api');
   // Na hospedagem há um proxy na frente: o IP real do visitante vem no cabeçalho X-Forwarded-For.
   app.set('trust proxy', 1);
+  // Cabeçalhos de segurança. A CSP fica para quando o painel deixar de usar scripts inline do Next.
+  app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
+
+  if (ambiente !== 'prd') {
+    const doc = new DocumentBuilder()
+      .setTitle('Estância Maciel API')
+      .setDescription(`Ambiente ${ambiente.toUpperCase()}`)
+      .setVersion('1')
+      .addBearerAuth()
+      .build();
+    SwaggerModule.setup('api/docs', app, () => SwaggerModule.createDocument(app, doc));
+  }
   // Importação de planilhas envia até 5.000 linhas de uma vez.
   app.useBodyParser('json', { limit: '10mb' });
   app.enableCors({ origin: (process.env.WEB_URL ?? 'http://localhost:3000').split(',') });
@@ -49,6 +67,6 @@ async function bootstrap() {
 
   const porta = Number(process.env.PORT ?? 3333);
   await app.listen(porta);
-  console.log(`Verissimo ERP rodando em http://localhost:${porta}${existsSync(site) ? '' : '/api'}`);
+  console.log(`Estância Maciel (${ambiente}) rodando em http://localhost:${porta}${existsSync(site) ? '' : '/api'} · banco ${hostBanco}`);
 }
 void bootstrap();

@@ -23,6 +23,20 @@ export class RedefinirSenhaDto {
   senha: string;
 }
 
+/** Cria o primeiro administrador, quando o sistema ainda não tem nenhum usuário. */
+export class PrimeiroAcessoDto {
+  @IsString()
+  @MinLength(2, { message: 'Informe seu nome' })
+  nome: string;
+
+  @IsEmail({}, { message: 'E-mail inválido' })
+  email: string;
+
+  @IsString()
+  @MinLength(8, { message: 'A senha precisa ter pelo menos 8 caracteres' })
+  senha: string;
+}
+
 export class RegistrarDto {
   @IsString()
   @MinLength(2, { message: 'Informe o nome da empresa' })

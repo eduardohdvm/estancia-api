@@ -27,10 +27,17 @@ export class EstoqueService {
    * para que saldo e histórico nunca fiquem diferentes.
    */
   async movimentar(tx: Tx, m: Movimento) {
-    const atual = await tx.estoque.findUnique({
-      where: { produtoId_depositoId: { produtoId: m.produtoId, depositoId: m.depositoId } },
-    });
-    const saldoAnterior = Number(atual?.quantidade ?? 0);
+    // Trava a linha do saldo até o fim da transação: movimentos simultâneos do mesmo
+    // produto/depósito esperam a vez em vez de calcular sobre um saldo desatualizado.
+    await tx.$executeRaw`
+      INSERT INTO "Estoque" ("id", "empresaId", "produtoId", "depositoId", "quantidade")
+      VALUES (gen_random_uuid()::text, ${m.empresaId}, ${m.produtoId}, ${m.depositoId}, 0)
+      ON CONFLICT ("produtoId", "depositoId") DO NOTHING`;
+    const [atual] = await tx.$queryRaw<{ quantidade: Prisma.Decimal }[]>`
+      SELECT "quantidade" FROM "Estoque"
+      WHERE "produtoId" = ${m.produtoId} AND "depositoId" = ${m.depositoId}
+      FOR UPDATE`;
+    const saldoAnterior = Number(atual.quantidade);
     const saldoNovo =
       m.tipo === 'ENTRADA' ? saldoAnterior + m.quantidade : m.tipo === 'SAIDA' ? saldoAnterior - m.quantidade : m.quantidade;
 
@@ -41,10 +48,9 @@ export class EstoqueService {
       );
     }
 
-    await tx.estoque.upsert({
+    await tx.estoque.update({
       where: { produtoId_depositoId: { produtoId: m.produtoId, depositoId: m.depositoId } },
-      create: { empresaId: m.empresaId, produtoId: m.produtoId, depositoId: m.depositoId, quantidade: saldoNovo },
-      update: { quantidade: saldoNovo },
+      data: { quantidade: saldoNovo },
     });
 
     return tx.movimentoEstoque.create({

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TelaAcesso } from '@/components/tela-acesso';
 import { Alerta, Botao, Campo } from '@/components/ui';
 import { api } from '@/lib/api';
@@ -16,6 +16,13 @@ export default function Login() {
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState('');
   const [enviando, setEnviando] = useState(false);
+
+  // Sistema recém-instalado, sem nenhum usuário: vai direto para a criação do administrador.
+  useEffect(() => {
+    api<{ disponivel: boolean }>('/auth/primeiro-acesso')
+      .then(({ disponivel }) => disponivel && router.replace('/primeiro-acesso'))
+      .catch(() => undefined);
+  }, [router]);
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
@@ -31,7 +38,7 @@ export default function Login() {
   }
 
   return (
-    <TelaAcesso titulo="Verissimo ERP" subtitulo="Entre com sua conta para continuar">
+    <TelaAcesso titulo="Estância Maciel" subtitulo="Entre com sua conta para continuar">
       <form onSubmit={enviar} className="flex flex-col gap-4">
         <Campo rotulo="E-mail" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
         <Campo rotulo="Senha" type="password" autoComplete="current-password" required value={senha} onChange={(e) => setSenha(e.target.value)} />
@@ -43,12 +50,7 @@ export default function Login() {
           Entrar
         </Botao>
       </form>
-      <p className="mt-6 text-center text-sm text-slate-500">
-        Ainda não tem conta?{' '}
-        <Link href="/registrar" className="font-medium text-indigo-600 hover:underline">
-          Cadastre sua empresa
-        </Link>
-      </p>
+      <p className="mt-6 text-center text-sm text-slate-500">Não tem conta? Peça ao administrador para criar o seu acesso.</p>
     </TelaAcesso>
   );
 }
