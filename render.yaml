@@ -23,8 +23,10 @@ envVarGroups:
         value: 8h
       - key: JWT_SECRET
         generateValue: true
-      - key: WEB_URL # origens liberadas no CORS: o catálogo HML no Firebase (preenchido na Fase 4)
-        value: ""
+      - key: WEB_URL # origens liberadas no CORS: o catálogo HML no Firebase
+        value: "https://estancia-maciel-hml.web.app,https://estancia-maciel-hml.firebaseapp.com"
+      - key: LOJA_WHATSAPP # recebe os orçamentos do catálogo (55 + DDD + número)
+        value: "5534998942864"
       - key: DATABASE_URL # Neon HML com pooler (host com -pooler), sslmode=verify-full
         sync: false
       - key: DIRECT_URL # Neon HML sem pooler: usado só pelas migrations

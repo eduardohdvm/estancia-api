@@ -18,6 +18,7 @@ import { PdvModule } from './pdv/pdv.module';
 import { PessoasModule } from './pessoas/pessoas.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProdutosModule } from './produtos/produtos.module';
+import { PublicoModule } from './publico/publico.module';
 import { RelatoriosModule } from './relatorios/relatorios.module';
 import { SaudeController } from './saude.controller';
 import { UsuariosModule } from './usuarios/usuarios.module';
@@ -38,6 +39,7 @@ import { VendasModule } from './vendas/vendas.module';
     ProdutosModule,
     EstoqueModule,
     VendasModule,
+    PublicoModule,
     FinanceiroModule,
     DashboardModule,
     ComprasModule,

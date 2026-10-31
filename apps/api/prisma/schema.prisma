@@ -136,6 +136,7 @@ model Pessoa {
   cliente           Boolean    @default(true)
   fornecedor        Boolean    @default(false)
   ativo             Boolean    @default(true)
+  telefoneE164      String? // telefone normalizado (+5511999998888): WhatsApp e cliente do catálogo
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
 
@@ -147,6 +148,7 @@ model Pessoa {
   atividades    Atividade[]
 
   @@unique([empresaId, documento])
+  @@index([empresaId, telefoneE164])
   @@index([empresaId, nome])
 }
 
@@ -176,6 +178,10 @@ model Produto {
   estoqueMinimo Decimal  @default(0) @db.Decimal(14, 3)
   servico       Boolean  @default(false) // serviço não movimenta estoque
   ativo         Boolean  @default(true)
+  // Catálogo público (estancia-catalogo)
+  publicado       Boolean       @default(false) // aparece no catálogo
+  armazenamento   Armazenamento @default(AMBIENTE)
+  vendaFracionada Boolean       @default(false) // aceita quantidade quebrada (ex.: 1,5 kg)
   // Dados fiscais (NF-e/NFC-e). Sem CFOP/CSOSN, valem os padrões da configuração fiscal.
   ncm           String?
   cest          String?
@@ -194,6 +200,12 @@ model Produto {
 
   @@unique([empresaId, codigo])
   @@index([empresaId, nome])
+}
+
+enum Armazenamento {
+  AMBIENTE
+  REFRIGERADO
+  CONGELADO
 }
 
 // ───────────────────────────── Estoque ─────────────────────────────
@@ -275,6 +287,12 @@ enum StatusPedido {
 enum OrigemPedido {
   PEDIDO // criado na tela de vendas
   PDV // venda de balcão na frente de caixa
+  CATALOGO // orçamento enviado pelo catálogo público
+}
+
+enum Modalidade {
+  RETIRADA
+  ENTREGA
 }
 
 model PedidoVenda {
@@ -294,6 +312,11 @@ model PedidoVenda {
   parcelas    Int          @default(1)
   observacoes String?
   faturadoEm  DateTime?
+  // Orçamento do catálogo público (ADR-009)
+  modalidade          Modalidade @default(RETIRADA)
+  enderecoEntrega     Json? // cópia do endereço informado pelo cliente
+  solicitacaoOriginal Json? // cópia imutável do carrinho e dos preços como o cliente viu
+  whatsappAbertoEm    DateTime? // cliente tocou no botão; não prova que a mensagem foi enviada
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
