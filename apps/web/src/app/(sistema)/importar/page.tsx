@@ -38,7 +38,7 @@ const TIPOS: Record<Tipo, { titulo: string; perfis: Perfil[]; descricao: string;
     destino: '/produtos',
   },
   pessoas: {
-    titulo: 'Clientes e fornecedores',
+    titulo: 'Clientes',
     perfis: ['GERENTE', 'VENDEDOR', 'FINANCEIRO'],
     descricao: 'Cadastra pessoas novas e atualiza as existentes (pelo CPF/CNPJ ou, sem documento, pelo nome).',
     colunas: 'Obrigatória: Nome (ou Razão social). Opcionais: CPF/CNPJ, Nome fantasia, Tipo (PF/PJ), E-mail, Telefone, CEP, Endereço, Número, Bairro, Cidade, UF, Observações, Cliente (Sim/Não), Fornecedor (Sim/Não).',
@@ -105,7 +105,7 @@ function FormularioImportacao({ tipo }: { tipo: Tipo }) {
   const config = TIPOS[tipo];
   const entrada = useRef<HTMLInputElement>(null);
   const [arquivo, setArquivo] = useState<{ nome: string; linhas: LinhaPlanilha[]; cabecalhos: string[] } | null>(null);
-  const [papel, setPapel] = useState<'cliente' | 'fornecedor'>('cliente');
+  const papel = 'cliente';
   const [modo, setModo] = useState<'AJUSTE' | 'ENTRADA'>('AJUSTE');
   const [simulacao, setSimulacao] = useState<Resultado | null>(null);
   const [concluido, setConcluido] = useState<Resultado | null>(null);
@@ -205,19 +205,12 @@ function FormularioImportacao({ tipo }: { tipo: Tipo }) {
         </Botao>
       </Cartao>
 
-      {(tipo === 'pessoas' || tipo === 'estoque') && (
+      {tipo === 'estoque' && (
         <Cartao className="p-5">
-          {tipo === 'pessoas' ? (
-            <Selecao rotulo="Cadastrar como (quando a planilha não tiver as colunas Cliente/Fornecedor)" value={papel} onChange={(e) => (setPapel(e.target.value as typeof papel), setSimulacao(null))} className="max-w-md">
-              <option value="cliente">Clientes</option>
-              <option value="fornecedor">Fornecedores</option>
-            </Selecao>
-          ) : (
-            <Selecao rotulo="O que a quantidade significa" value={modo} onChange={(e) => (setModo(e.target.value as typeof modo), setSimulacao(null))} className="max-w-md">
-              <option value="AJUSTE">Saldo contado (substitui o saldo atual: inventário ou implantação)</option>
-              <option value="ENTRADA">Entrada (soma ao saldo atual)</option>
-            </Selecao>
-          )}
+          <Selecao rotulo="O que a quantidade significa" value={modo} onChange={(e) => (setModo(e.target.value as typeof modo), setSimulacao(null))} className="max-w-md">
+            <option value="AJUSTE">Saldo contado (substitui o saldo atual: inventário ou implantação)</option>
+            <option value="ENTRADA">Entrada (soma ao saldo atual)</option>
+          </Selecao>
           {arquivo && !simulacao && !processando && (
             <Botao variante="secundario" className="mt-3" onClick={resimular}>
               Conferir de novo com esta opção

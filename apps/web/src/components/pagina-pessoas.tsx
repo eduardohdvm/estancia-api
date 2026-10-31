@@ -120,7 +120,6 @@ export function PaginaPessoas({ papel }: { papel: 'cliente' | 'fornecedor' }) {
             <Celula>{p.cidade ? `${p.cidade}${p.uf ? '/' + p.uf : ''}` : '—'}</Celula>
             <Celula>
               <div className="flex gap-1">
-                {p.cliente && p.fornecedor && <Etiqueta tom="roxo">Cliente e fornecedor</Etiqueta>}
                 {!p.ativo && <Etiqueta>Inativo</Etiqueta>}
               </div>
             </Celula>
@@ -163,7 +162,6 @@ export function PaginaPessoas({ papel }: { papel: 'cliente' | 'fornecedor' }) {
           </div>
           <div className="mt-4 flex flex-wrap gap-5">
             <Caixa rotulo="É cliente" checked={form.cliente} onChange={(e) => setForm({ ...form, cliente: e.target.checked })} />
-            <Caixa rotulo="É fornecedor" checked={form.fornecedor} onChange={(e) => setForm({ ...form, fornecedor: e.target.checked })} />
             <Caixa rotulo="Ativo" checked={form.ativo} onChange={(e) => setForm({ ...form, ativo: e.target.checked })} />
           </div>
           <div className="mt-4">

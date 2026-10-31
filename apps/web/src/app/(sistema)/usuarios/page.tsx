@@ -8,13 +8,13 @@ import { data, rotuloPerfil } from '@/lib/formato';
 import type { Perfil, UsuarioEmpresa } from '@/lib/tipos';
 import { useDados } from '@/lib/use-dados';
 
-const descricaoPerfil: Record<Perfil, string> = {
+// Perfis que podem ser escolhidos (o de operador de caixa saiu junto com a frente de caixa).
+const descricaoPerfil: Partial<Record<Perfil, string>> = {
   ADMIN: 'Acesso total, inclusive usuários',
   GERENTE: 'Tudo, exceto gerenciar usuários',
-  VENDEDOR: 'Vendas, PDV, CRM e clientes',
+  VENDEDOR: 'Vendas, orçamentos e clientes',
   FINANCEIRO: 'Contas a pagar e receber, caixa e bancos',
-  ESTOQUISTA: 'Produtos, estoque e compras',
-  CAIXA: 'Somente a frente de caixa (PDV)',
+  ESTOQUISTA: 'Produtos e estoque',
 };
 
 const vazio = { nome: '', email: '', senha: '', perfil: 'VENDEDOR' as Perfil, ativo: true };

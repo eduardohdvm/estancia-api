@@ -74,12 +74,10 @@ jobs:
         env:
           # Os e2e herdados criam uma empresa por execução: só aqui o registro público fica ligado.
           REGISTRO_PUBLICO: 'true'
-          MODULOS_OPCIONAIS: pdv,crm
         run: |
           node dist/main.js > api.log 2>&1 &
           for i in $(seq 1 60); do curl -sf http://localhost:3333/api/saude && break; sleep 1; done
           npm run test:e2e
-          node test/fase2.e2e.mjs
 
       - name: Log da API (em caso de falha)
         if: failure()

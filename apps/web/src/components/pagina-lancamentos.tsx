@@ -26,7 +26,7 @@ export function PaginaLancamentos({ tipo }: { tipo: TipoLancamento }) {
   );
   const contas = useDados<ContaBancaria[]>('/financeiro/contas');
   const categorias = useDados<CategoriaFinanceira[]>('/financeiro/categorias');
-  const pessoas = useDados<Paginado<Pessoa>>(`/pessoas?porPagina=200&papel=${receber ? 'cliente' : 'fornecedor'}`);
+  const pessoas = useDados<Paginado<Pessoa>>(`/pessoas?porPagina=200${receber ? '&papel=cliente' : ''}`);
 
   const [formAberto, setFormAberto] = useState<Lancamento | 'novo' | null>(null);
   const [baixando, setBaixando] = useState<Lancamento | null>(null);
@@ -82,9 +82,9 @@ export function PaginaLancamentos({ tipo }: { tipo: TipoLancamento }) {
                   </Link>
                 )}
                 {l.pedidoCompra && (
-                  <Link href={`/compras/ver?id=${l.pedidoCompra.id}`} className="text-xs text-indigo-600 hover:underline">
+                  <p className="text-xs text-slate-500">
                     Compra #{l.pedidoCompra.numero} · parcela {l.parcela}/{l.totalParcelas}
-                  </Link>
+                  </p>
                 )}
                 {l.status === 'PAGO' && (
                   <p className="text-xs text-slate-500">

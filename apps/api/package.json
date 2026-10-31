@@ -14,7 +14,7 @@
     "lint": "eslint src test prisma",
     "typecheck": "prisma generate && tsc --noEmit -p tsconfig.json",
     "test:e2e": "node test/fase1.e2e.mjs && node test/importacao.e2e.mjs && node test/relatorios.e2e.mjs",
-    "test:e2e:opcionais": "node test/fase2.e2e.mjs && node test/fiscal.e2e.mjs",
+    "test:e2e:opcionais": "node test/fiscal.e2e.mjs",
     "test:fiscal": "tsx test/fiscal.unit.ts",
     "start:prod": "node dist/conferir-ambiente.js && prisma migrate deploy && prisma db seed && node dist/main.js",
     "db:exemplo": "tsx prisma/estancia-exemplo.ts"

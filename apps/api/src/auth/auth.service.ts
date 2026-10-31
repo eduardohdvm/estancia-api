@@ -28,13 +28,13 @@ function emailRecuperacao(nome: string, para: string, link: string): Email {
   const primeiroNome = nome.split(' ')[0];
   return {
     para,
-    assunto: 'Verissimo ERP - criar uma senha nova',
-    texto: `Olá, ${primeiroNome}!\n\nRecebemos um pedido para criar uma senha nova no Verissimo ERP.\nAbra o link abaixo (vale por 1 hora):\n\n${link}\n\nSe não foi você, ignore este e-mail: sua senha continua a mesma.`,
-    html: `<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;color:#0f172a">
-  <h2 style="color:#4f46e5">Verissimo ERP</h2>
+    assunto: 'Estância Maciel - criar uma senha nova',
+    texto: `Olá, ${primeiroNome}!\n\nRecebemos um pedido para criar uma senha nova no sistema da Estância Maciel.\nAbra o link abaixo (vale por 1 hora):\n\n${link}\n\nSe não foi você, ignore este e-mail: sua senha continua a mesma.`,
+    html: `<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;color:#3b2416">
+  <h2 style="color:#5a3a26">Estância Maciel</h2>
   <p>Olá, ${escaparHtml(primeiroNome)}!</p>
   <p>Recebemos um pedido para criar uma senha nova. Clique no botão abaixo (o link vale por 1 hora):</p>
-  <p style="margin:28px 0"><a href="${link}" style="background:#4f46e5;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none">Criar senha nova</a></p>
+  <p style="margin:28px 0"><a href="${link}" style="background:#5a3a26;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none">Criar senha nova</a></p>
   <p style="font-size:13px;color:#64748b">Se o botão não funcionar, copie este endereço no navegador:<br>${link}</p>
   <p style="font-size:13px;color:#64748b">Se não foi você, ignore este e-mail: sua senha continua a mesma.</p>
 </div>`,

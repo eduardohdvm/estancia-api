@@ -6,8 +6,8 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
-  title: 'Verissimo ERP',
-  description: 'Gestão empresarial simples e completa',
+  title: 'Estância Maciel',
+  description: 'Painel da Estância Maciel — Culinária Caipira',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

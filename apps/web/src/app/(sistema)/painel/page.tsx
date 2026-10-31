@@ -1,8 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 import { Alerta, Cabecalho, Cartao, Indicador, Status } from '@/components/ui';
 import { moeda, numero } from '@/lib/formato';
 import { useSessao } from '@/lib/sessao';
@@ -29,14 +27,7 @@ const nomeMes = (mes: string) =>
 
 export default function PaginaPainel() {
   const { usuario } = useSessao();
-  const router = useRouter();
-  const operadorDeCaixa = usuario?.perfil === 'CAIXA';
-  const { dados, erro } = useDados<Painel>(operadorDeCaixa ? null : '/dashboard');
-
-  // O operador de caixa só usa o PDV: vai direto para lá.
-  useEffect(() => {
-    if (operadorDeCaixa) router.replace('/pdv');
-  }, [operadorDeCaixa, router]);
+  const { dados, erro } = useDados<Painel>('/dashboard');
   const maior = Math.max(1, ...(dados?.vendasPorMes.map((m) => m.total) ?? []));
 
   return (

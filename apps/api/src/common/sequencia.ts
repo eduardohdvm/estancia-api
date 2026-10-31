@@ -4,8 +4,6 @@ import { Tx } from '../prisma/prisma.service';
 /** Numerações por empresa e a tabela de onde vem o maior número já usado (para começar dele). */
 const TABELAS = {
   PEDIDO: 'PedidoVenda',
-  COMPRA: 'PedidoCompra',
-  CAIXA: 'Caixa',
 } as const;
 
 export type NomeSequencia = keyof typeof TABELAS;

@@ -1,11 +1,35 @@
 @import 'tailwindcss';
 
+/*
+ * Identidade da Estância Maciel (docs/marca/identidade-visual.md).
+ * As telas herdadas usam a cor "indigo" como destaque; aqui ela vira a escala de marrom da marca,
+ * assim botões, links e seleções ficam com a cara da Estância sem reescrever cada tela.
+ */
+@theme {
+  --color-indigo-50: #f8f3ea;
+  --color-indigo-100: #efe6d8;
+  --color-indigo-200: #e2d3bd;
+  --color-indigo-300: #d8c6ac;
+  --color-indigo-400: #b8936f;
+  --color-indigo-500: #8a6446;
+  --color-indigo-600: #5a3a26;
+  --color-indigo-700: #4a2f1f;
+  --color-indigo-800: #3b2416;
+  --color-indigo-900: #2e1c11;
+  --color-indigo-950: #1f130b;
+
+  --color-marca-escuro: #3b2416;
+  --color-marca: #5a3a26;
+  --color-marca-claro: #d8c6ac;
+  --color-creme: #f8f3ea;
+}
+
 :root {
   color-scheme: light;
 }
 
 body {
-  background: #f8fafc;
-  color: #0f172a;
+  background: #f8f3ea;
+  color: #2e1c11;
   font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }

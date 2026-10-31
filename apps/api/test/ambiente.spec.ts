@@ -71,15 +71,12 @@ describe('módulos opcionais e registro público', () => {
   it('ficam desligados por padrão', () => {
     delete process.env.MODULOS_OPCIONAIS;
     delete process.env.REGISTRO_PUBLICO;
-    expect(moduloLigado('pdv')).toBe(false);
     expect(moduloLigado('fiscal')).toBe(false);
     expect(registroPublicoLigado()).toBe(false);
   });
 
   it('ligam pela lista', () => {
-    process.env.MODULOS_OPCIONAIS = ' PDV , crm';
-    expect(moduloLigado('pdv')).toBe(true);
-    expect(moduloLigado('crm')).toBe(true);
-    expect(moduloLigado('fiscal')).toBe(false);
+    process.env.MODULOS_OPCIONAIS = ' FISCAL , outro';
+    expect(moduloLigado('fiscal')).toBe(true);
   });
 });

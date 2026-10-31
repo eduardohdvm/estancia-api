@@ -6,7 +6,7 @@
 export type AppEnv = 'dev' | 'test' | 'hml' | 'prd';
 
 /** Módulos herdados do Verissimo que a Estância Maciel não usa por enquanto (ADR-004). */
-export type ModuloOpcional = 'fiscal' | 'pdv' | 'crm';
+export type ModuloOpcional = 'fiscal';
 
 export const appEnv = (): AppEnv => {
   const valor = (process.env.APP_ENV ?? 'dev').toLowerCase();
@@ -14,7 +14,7 @@ export const appEnv = (): AppEnv => {
   return valor as AppEnv;
 };
 
-/** `MODULOS_OPCIONAIS="pdv,crm"` liga esses módulos. Vazio = todos desligados. */
+/** `MODULOS_OPCIONAIS="fiscal"` liga esses módulos. Vazio = todos desligados. */
 export const moduloLigado = (modulo: ModuloOpcional) =>
   (process.env.MODULOS_OPCIONAIS ?? '')
     .split(',')

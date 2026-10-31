@@ -86,7 +86,7 @@ export async function exportarPdf(d: DadosExportacao) {
     },
     didDrawPage: () => {
       const pagina = doc.getCurrentPageInfo().pageNumber;
-      doc.setFontSize(8).setTextColor(150).text(`Verissimo ERP · página ${pagina}`, largura - 40, doc.internal.pageSize.getHeight() - 20, { align: 'right' });
+      doc.setFontSize(8).setTextColor(150).text(`Estância Maciel · página ${pagina}`, largura - 40, doc.internal.pageSize.getHeight() - 20, { align: 'right' });
     },
   });
   doc.save(`${d.nomeArquivo}.pdf`);

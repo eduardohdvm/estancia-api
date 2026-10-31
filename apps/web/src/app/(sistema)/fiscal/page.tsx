@@ -79,7 +79,7 @@ export default function NotasFiscais() {
               </p>
               <p className="font-mono text-[10px] text-slate-400">{chaveFormatada(n.chave)}</p>
               {n.pedido && (
-                <Link href={n.pedido.origem === 'PDV' ? '/pdv/caixas' : `/vendas/ver?id=${n.pedido.id}`} className="text-xs text-indigo-600 hover:underline">
+                <Link href={`/vendas/ver?id=${n.pedido.id}`} className="text-xs text-indigo-600 hover:underline">
                   {n.pedido.origem === 'PDV' ? 'Venda PDV' : 'Pedido'} #{n.pedido.numero}
                 </Link>
               )}

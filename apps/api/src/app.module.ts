@@ -6,15 +6,12 @@ import { AuthModule } from './auth/auth.module';
 import { moduloLigado } from './common/ambiente';
 import { AuthGuard } from './common/auth.guard';
 import { PrismaErroFilter } from './common/prisma-erro.filter';
-import { ComprasModule } from './compras/compras.module';
-import { CrmModule } from './crm/crm.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { EmailModule } from './email/email.module';
 import { EstoqueModule } from './estoque/estoque.module';
 import { FinanceiroModule } from './financeiro/financeiro.module';
 import { FiscalModule } from './fiscal/fiscal.module';
 import { ImportacaoModule } from './importacao/importacao.module';
-import { PdvModule } from './pdv/pdv.module';
 import { PessoasModule } from './pessoas/pessoas.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProdutosModule } from './produtos/produtos.module';
@@ -42,14 +39,11 @@ import { VendasModule } from './vendas/vendas.module';
     PublicoModule,
     FinanceiroModule,
     DashboardModule,
-    ComprasModule,
     RelatoriosModule,
     ImportacaoModule,
     EmailModule,
-    // Herdados do Verissimo, desligados por padrão (ADR-004). O PDV depende do fiscal.
-    ...(moduloLigado('pdv') ? [PdvModule] : []),
-    ...(moduloLigado('crm') ? [CrmModule] : []),
-    ...(moduloLigado('fiscal') || moduloLigado('pdv') ? [FiscalModule] : []),
+    // Nota fiscal herdada do Verissimo: desligada por padrão (ADR-004).
+    ...(moduloLigado('fiscal') ? [FiscalModule] : []),
   ],
   controllers: [SaudeController],
   providers: [
