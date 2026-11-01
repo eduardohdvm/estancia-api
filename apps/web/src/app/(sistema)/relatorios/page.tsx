@@ -34,7 +34,7 @@ interface Dre {
 
 // ─────────── Filtro de período ───────────
 
-type Filtro = { de: string; ate: string; origem: '' | 'PEDIDO' | 'PDV' };
+type Filtro = { de: string; ate: string; origem: '' | 'PEDIDO' | 'CATALOGO' };
 
 const primeiroDia = (mesesAtras: number) => {
   const d = new Date();
@@ -73,7 +73,7 @@ const pct = (v: number) => `${v.toLocaleString('pt-BR', { maximumFractionDigits:
 export default function Relatorios() {
   const [aba, setAba] = useState<Aba>('periodo');
   const [filtro, setFiltro] = useState<Filtro>({ de: primeiroDia(0), ate: hojeIso(), origem: '' });
-  const subtitulo = `Período: ${data(`${filtro.de}T00:00:00Z`)} a ${data(`${filtro.ate}T00:00:00Z`)}${filtro.origem ? ` · ${filtro.origem === 'PDV' ? 'só PDV' : 'só pedidos'}` : ''}`;
+  const subtitulo = `Período: ${data(`${filtro.de}T00:00:00Z`)} a ${data(`${filtro.ate}T00:00:00Z`)}${filtro.origem ? ` · ${filtro.origem === 'CATALOGO' ? 'só catálogo' : 'só pedidos'}` : ''}`;
   const params = { de: filtro.de, ate: filtro.ate, origem: filtro.origem || undefined };
 
   return (
@@ -106,7 +106,7 @@ export default function Relatorios() {
             <Selecao rotulo="Origem" value={filtro.origem} onChange={(e) => setFiltro({ ...filtro, origem: e.target.value as Filtro['origem'] })}>
               <option value="">Todas as vendas</option>
               <option value="PEDIDO">Só pedidos</option>
-              <option value="PDV">Só PDV</option>
+              <option value="CATALOGO">Só catálogo</option>
             </Selecao>
           )}
         </div>

@@ -11,10 +11,10 @@ export class FiltroRelatorioDto {
   @IsDateString()
   ate?: string;
 
-  /** Só vendas da tela de pedidos ou só do PDV. Padrão: todas. */
+  /** Só vendas da tela de pedidos ou só orçamentos do catálogo. Padrão: todas. */
   @IsOptional()
-  @IsIn(['PEDIDO', 'PDV'])
-  origem?: 'PEDIDO' | 'PDV';
+  @IsIn(['PEDIDO', 'CATALOGO'])
+  origem?: 'PEDIDO' | 'CATALOGO';
 
   /** Agrupamento do relatório por período. */
   @IsOptional()

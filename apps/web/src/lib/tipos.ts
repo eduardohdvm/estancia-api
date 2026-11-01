@@ -108,7 +108,7 @@ export interface PedidoResumo {
 
 export interface Pedido extends PedidoResumo {
   cliente: { id: string; nome: string; documento: string | null };
-  origem: 'PEDIDO' | 'PDV';
+  origem: 'PEDIDO' | 'PDV' | 'CATALOGO';
   clienteId: string;
   depositoId: string;
   subtotal: string;
